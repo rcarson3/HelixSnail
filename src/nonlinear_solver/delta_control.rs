@@ -1,11 +1,20 @@
-
 use libm;
 pub trait DeltaControl {
     fn get_delta_initial(&self) -> f64;
     fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool;
     fn increase_delta(&self, delta: &mut f64);
     #[allow(clippy::too_many_arguments)]
-    fn update_delta(&self, delta: &mut f64, reject: &mut bool, rho: &mut f64, res: f64, res0: f64, pred_resid: f64, took_full: bool, norm_full: f64) -> bool;
+    fn update_delta(
+        &self,
+        delta: &mut f64,
+        reject: &mut bool,
+        rho: &mut f64,
+        res: f64,
+        res0: f64,
+        pred_resid: f64,
+        took_full: bool,
+        norm_full: f64,
+    ) -> bool;
 }
 
 pub struct TrustRegionDeltaControl {
@@ -24,14 +33,14 @@ pub struct TrustRegionDeltaControl {
 
 impl TrustRegionDeltaControl {
     #[allow(dead_code)]
-    fn check_params(&self) -> bool { 
-        !(( self.delta_min <= 0.0_f64 ) ||
-        ( self.delta_max <= self.delta_min ) ||
-        ( self.xi_lg <= self.xi_lo ) ||
-        ( self.xi_ug >= self.xi_uo ) ||
-        ( self.xi_incr_delta <= 1.0_f64 ) ||
-        ( ( self.xi_decr_delta >= 1.0_f64 ) || ( self.xi_decr_delta <= 0.0_f64 ) ) ||
-        ( self.xi_forced_incr_delta <= 1.0_f64 ))
+    fn check_params(&self) -> bool {
+        !((self.delta_min <= 0.0_f64)
+            || (self.delta_max <= self.delta_min)
+            || (self.xi_lg <= self.xi_lo)
+            || (self.xi_ug >= self.xi_uo)
+            || (self.xi_incr_delta <= 1.0_f64)
+            || ((self.xi_decr_delta >= 1.0_f64) || (self.xi_decr_delta <= 0.0_f64))
+            || (self.xi_forced_incr_delta <= 1.0_f64))
     }
 }
 
@@ -39,16 +48,14 @@ impl DeltaControl for TrustRegionDeltaControl {
     fn get_delta_initial(&self) -> f64 {
         self.delta_init
     }
-    fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool
-    {
+    fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool {
         if took_full {
             *delta = libm::sqrt((*delta) * norm_full * self.xi_decr_delta * self.xi_decr_delta);
         } else {
-            *delta *= self.xi_decr_delta; 
+            *delta *= self.xi_decr_delta;
         }
-        if *delta < self.delta_min
-        {
-            *delta = self.delta_min; 
+        if *delta < self.delta_min {
+            *delta = self.delta_min;
             false
         } else {
             true
@@ -61,7 +68,17 @@ impl DeltaControl for TrustRegionDeltaControl {
         }
     }
     #[allow(clippy::too_many_arguments)]
-    fn update_delta(&self, delta: &mut f64, reject: &mut bool, rho: &mut f64, res: f64, res0: f64, pred_resid: f64, took_full: bool, norm_full: f64) -> bool {
+    fn update_delta(
+        &self,
+        delta: &mut f64,
+        reject: &mut bool,
+        rho: &mut f64,
+        res: f64,
+        res0: f64,
+        pred_resid: f64,
+        took_full: bool,
+        norm_full: f64,
+    ) -> bool {
         let actual_change = res - res0;
         let pred_change = pred_resid - res0;
         let mut success = false;

@@ -3,5 +3,5 @@
 
 extern crate libm;
 
-pub mod nonlinear_solver;
 mod linear_algebra;
+pub mod nonlinear_solver;

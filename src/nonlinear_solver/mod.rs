@@ -1,4 +1,3 @@
-
 pub mod delta_control;
 pub mod tr_dogleg_solver;
 
@@ -20,9 +19,15 @@ pub enum NonlinearSolverStatus {
 }
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers
-pub trait NonlinearSolver{
+pub trait NonlinearSolver {
     const NDIM: usize;
-    fn setup_solver(&mut self, max_iter: u32, tolerance: f64, delta_control: &TrustRegionDeltaControl, output_level: Option<i32>);
+    fn setup_solver(
+        &mut self,
+        max_iter: u32,
+        tolerance: f64,
+        delta_control: &TrustRegionDeltaControl,
+        output_level: Option<i32>,
+    );
     fn set_logging_level(output_level: Option<u32>);
     fn solve(&mut self) -> NonlinearSolverStatus;
     fn get_num_fcn_evals(&self) -> u32;
@@ -33,6 +38,11 @@ pub trait NonlinearSolver{
 }
 
 pub trait NonlinearProblem {
-    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [f64], jacobian: &mut [f64], x: &[f64]) -> bool;
+    fn compute_resid_jacobian(
+        &mut self,
+        fcn_eval: &mut [f64],
+        jacobian: &mut [f64],
+        x: &[f64],
+    ) -> bool;
     const NDIM: usize;
 }
