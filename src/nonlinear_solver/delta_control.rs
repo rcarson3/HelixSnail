@@ -1,4 +1,7 @@
-use libm;
+// Make use of the num-traits::Float to enable us to easily swap between std and no_std float operations
+// We could also maybe eventually look into even making the solvers generic, so users could use
+// either f32 or f64 types.
+use libnum::{Float};
 pub trait DeltaControl {
     fn get_delta_initial(&self) -> f64;
     fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool;
@@ -50,7 +53,7 @@ impl DeltaControl for TrustRegionDeltaControl {
     }
     fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool {
         if took_full {
-            *delta = libm::sqrt((*delta) * norm_full * self.xi_decr_delta * self.xi_decr_delta);
+            *delta = Float::sqrt((*delta) * norm_full * self.xi_decr_delta * self.xi_decr_delta);
         } else {
             *delta *= self.xi_decr_delta;
         }
@@ -87,7 +90,7 @@ impl DeltaControl for TrustRegionDeltaControl {
             if *delta >= self.delta_max {
                 return false;
             }
-            *delta = libm::fmin(*delta * self.xi_forced_incr_delta, self.delta_max);
+            *delta = Float::min(*delta * self.xi_forced_incr_delta, self.delta_max);
         } else {
             *rho = actual_change / pred_change;
             if (*rho > self.xi_lg) && (actual_change < 0.0_f64) && (*rho < self.xi_ug) {
