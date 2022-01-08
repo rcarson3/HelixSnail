@@ -1,57 +1,65 @@
 // Make use of the num-traits::Float to enable us to easily swap between std and no_std float operations
 // We could also maybe eventually look into even making the solvers generic, so users could use
 // either f32 or f64 types.
-use libnum::{Float};
-pub trait DeltaControl {
-    fn get_delta_initial(&self) -> f64;
-    fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool;
-    fn increase_delta(&self, delta: &mut f64);
+use libnum::{Float, Zero, One, NumAssignOps};
+pub trait DeltaControl<F>
+where F: Float + Zero + One + NumAssignOps
+{
+    fn get_delta_initial(&self) -> F;
+    fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool;
+    fn increase_delta(&self, delta: &mut F);
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
-        delta: &mut f64,
+        delta: &mut F,
         reject: &mut bool,
-        rho: &mut f64,
-        res: f64,
-        res0: f64,
-        pred_resid: f64,
+        rho: &mut F,
+        res: F,
+        res0: F,
+        pred_resid: F,
         took_full: bool,
-        norm_full: f64,
+        norm_full: F,
     ) -> bool;
 }
 
-pub struct TrustRegionDeltaControl {
-    pub xi_lg: f64,
-    pub xi_ug: f64,
-    pub xi_lo: f64,
-    pub xi_uo: f64,
-    pub xi_incr_delta: f64,
-    pub xi_decr_delta: f64,
-    pub xi_forced_incr_delta: f64,
-    pub delta_init: f64,
-    pub delta_min: f64,
-    pub delta_max: f64,
+pub struct TrustRegionDeltaControl<F>
+where F: Float + Zero + One + NumAssignOps
+{
+    pub xi_lg: F,
+    pub xi_ug: F,
+    pub xi_lo: F,
+    pub xi_uo: F,
+    pub xi_incr_delta: F,
+    pub xi_decr_delta: F,
+    pub xi_forced_incr_delta: F,
+    pub delta_init: F,
+    pub delta_min: F,
+    pub delta_max: F,
     pub reject_resid_increase: bool,
 }
 
-impl TrustRegionDeltaControl {
+impl<F> TrustRegionDeltaControl<F>
+where F: Float + Zero + One + NumAssignOps
+{
     #[allow(dead_code)]
     fn check_params(&self) -> bool {
-        !((self.delta_min <= 0.0_f64)
+        !((self.delta_min <= F::zero())
             || (self.delta_max <= self.delta_min)
             || (self.xi_lg <= self.xi_lo)
             || (self.xi_ug >= self.xi_uo)
-            || (self.xi_incr_delta <= 1.0_f64)
-            || ((self.xi_decr_delta >= 1.0_f64) || (self.xi_decr_delta <= 0.0_f64))
-            || (self.xi_forced_incr_delta <= 1.0_f64))
+            || (self.xi_incr_delta <= F::one())
+            || ((self.xi_decr_delta >= F::one()) || (self.xi_decr_delta <= F::zero()))
+            || (self.xi_forced_incr_delta <= F::zero()))
     }
 }
 
-impl DeltaControl for TrustRegionDeltaControl {
-    fn get_delta_initial(&self) -> f64 {
+impl<F> DeltaControl<F> for TrustRegionDeltaControl<F>
+where F: Float + Zero + One + NumAssignOps
+{
+    fn get_delta_initial(&self) -> F {
         self.delta_init
     }
-    fn decrease_delta(&self, delta: &mut f64, norm_full: f64, took_full: bool) -> bool {
+    fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool {
         if took_full {
             *delta = Float::sqrt((*delta) * norm_full * self.xi_decr_delta * self.xi_decr_delta);
         } else {
@@ -64,7 +72,7 @@ impl DeltaControl for TrustRegionDeltaControl {
             true
         }
     }
-    fn increase_delta(&self, delta: &mut f64) {
+    fn increase_delta(&self, delta: &mut F) {
         *delta *= self.xi_incr_delta;
         if *delta > self.delta_max {
             *delta = self.delta_max;
@@ -73,27 +81,27 @@ impl DeltaControl for TrustRegionDeltaControl {
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
-        delta: &mut f64,
+        delta: &mut F,
         reject: &mut bool,
-        rho: &mut f64,
-        res: f64,
-        res0: f64,
-        pred_resid: f64,
+        rho: &mut F,
+        res: F,
+        res0: F,
+        pred_resid: F,
         took_full: bool,
-        norm_full: f64,
+        norm_full: F,
     ) -> bool {
         let actual_change = res - res0;
         let pred_change = pred_resid - res0;
         let mut success = false;
 
-        if pred_change == 0.0 {
+        if pred_change == F::zero() {
             if *delta >= self.delta_max {
                 return false;
             }
             *delta = Float::min(*delta * self.xi_forced_incr_delta, self.delta_max);
         } else {
             *rho = actual_change / pred_change;
-            if (*rho > self.xi_lg) && (actual_change < 0.0_f64) && (*rho < self.xi_ug) {
+            if (*rho > self.xi_lg) && (actual_change < F::zero()) && (*rho < self.xi_ug) {
                 if !took_full {
                     self.increase_delta(delta);
                 }
@@ -103,7 +111,7 @@ impl DeltaControl for TrustRegionDeltaControl {
         }
         *reject = false;
 
-        if (actual_change > 0.0_f64) && (self.reject_resid_increase) {
+        if (actual_change > F::zero()) && (self.reject_resid_increase) {
             *reject = true;
         }
         success

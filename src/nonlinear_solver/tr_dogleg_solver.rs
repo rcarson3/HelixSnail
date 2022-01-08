@@ -1,8 +1,9 @@
 use super::*;
-pub struct TrustRegionDoglegSolver<NP: NonlinearProblem>
+pub struct TrustRegionDoglegSolver<F, NP: NonlinearProblem<F>>
 where
+    F: Float + Zero + One + NumAssignOps,
     [(); NP::NDIM]:,
 {
     pub m_crj: NP,
-    pub x: [f64; NP::NDIM],
+    pub x: [F; NP::NDIM],
 }
