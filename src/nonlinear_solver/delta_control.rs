@@ -1,9 +1,9 @@
 // Make use of the num-traits::Float to enable us to easily swap between std and no_std float operations
 // We could also maybe eventually look into even making the solvers generic, so users could use
 // either f32 or f64 types.
-use libnum::{Float, Zero, One, NumAssignOps};
+use libnum::{Float, Zero, One, NumAssignOps, NumOps};
 pub trait DeltaControl<F>
-where F: Float + Zero + One + NumAssignOps
+where F: Float + Zero + One + NumAssignOps + NumOps
 {
     fn get_delta_initial(&self) -> F;
     fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool;
@@ -23,7 +23,7 @@ where F: Float + Zero + One + NumAssignOps
 }
 
 pub struct TrustRegionDeltaControl<F>
-where F: Float + Zero + One + NumAssignOps
+where F: Float + Zero + One + NumAssignOps + NumOps
 {
     pub xi_lg: F,
     pub xi_ug: F,
@@ -39,7 +39,7 @@ where F: Float + Zero + One + NumAssignOps
 }
 
 impl<F> TrustRegionDeltaControl<F>
-where F: Float + Zero + One + NumAssignOps
+where F: Float + Zero + One + NumAssignOps + NumOps
 {
     #[allow(dead_code)]
     fn check_params(&self) -> bool {
@@ -54,7 +54,7 @@ where F: Float + Zero + One + NumAssignOps
 }
 
 impl<F> DeltaControl<F> for TrustRegionDeltaControl<F>
-where F: Float + Zero + One + NumAssignOps
+where F: Float + Zero + One + NumAssignOps + NumOps
 {
     fn get_delta_initial(&self) -> F {
         self.delta_init

@@ -1,7 +1,7 @@
 use super::*;
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
 where
-    F: Float + Zero + One + NumAssignOps,
+    F: Float + Zero + One + NumAssignOps + NumOps,
     [(); NP::NDIM]:,
 {
     pub x: [F; NP::NDIM],
