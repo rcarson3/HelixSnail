@@ -1,11 +1,11 @@
 pub mod delta_control;
-pub mod tr_dogleg_solver;
 pub mod dogleg;
+pub mod tr_dogleg_solver;
 
 pub use self::delta_control::*;
-pub use self::tr_dogleg_solver::*;
 pub use self::dogleg::*;
-use libnum::{Float, Zero, One, NumAssignOps, NumOps};
+pub use self::tr_dogleg_solver::*;
+use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Status of nonlinear solvers - status can range from converged, failure, and unconverged.
 pub enum NonlinearSolverStatus {
@@ -23,8 +23,9 @@ pub enum NonlinearSolverStatus {
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers
 pub trait NonlinearSolver<F, DC>
-where F: Float + Zero + One + NumAssignOps + NumOps,
-      DC: DeltaControl<F>
+where
+    F: Float + Zero + One + NumAssignOps + NumOps,
+    DC: DeltaControl<F>,
 {
     const NDIM: usize;
     fn setup_solver(
@@ -44,13 +45,9 @@ where F: Float + Zero + One + NumAssignOps + NumOps,
 }
 
 pub trait NonlinearProblem<F>
-where F: Float + Zero + One + NumAssignOps + NumOps,
+where
+    F: Float + Zero + One + NumAssignOps + NumOps,
 {
-    fn compute_resid_jacobian(
-        &mut self,
-        fcn_eval: &mut [F],
-        jacobian: &mut [F],
-        x: &[F],
-    ) -> bool;
+    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool;
     const NDIM: usize;
 }
