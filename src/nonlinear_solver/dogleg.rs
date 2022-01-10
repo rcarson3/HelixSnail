@@ -25,10 +25,7 @@ fn dogleg<const NDIM: usize, F>(
     if newton_raphson_l2_norm <= delta {
         // use Newton step
         *use_newton_raphson = true;
-
-        for i in 0..NDIM {
-            delta_x[i] = newton_raphson_step[i];
-        }
+        delta_x[..NDIM].clone_from_slice(&newton_raphson_step[..NDIM]);
         *predicted_residual = F::zero();
     }
     // Find Cauchy point
