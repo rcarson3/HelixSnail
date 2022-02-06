@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::*;
 use crate::linear_algebra::dot_prod;
 

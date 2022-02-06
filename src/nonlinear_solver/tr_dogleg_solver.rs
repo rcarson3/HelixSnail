@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use super::*;
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
 where
