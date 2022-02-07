@@ -44,7 +44,7 @@ where
     const NDIM: usize = NP::NDIM;
     fn setup_solver(
         &mut self,
-        max_iter: u32,
+        max_iter: usize,
         tolerance: F,
         delta_control: &DC,
         output_level: Option<i32>,
@@ -54,19 +54,19 @@ where
     fn solve(&mut self) -> NonlinearSolverStatus {
         NonlinearSolverStatus::Unconverged
     }
-    fn get_num_fcn_evals(&self) -> u32 {
-        0
+    fn get_num_fcn_evals(&self) -> usize {
+        self.num_iterations
     }
     fn get_solver_rho(&self) -> F {
-        F::zero()
+        self.rho_last
     }
     fn get_solver_delta(&self) -> F {
-        F::zero()
+        self.delta
     }
     fn get_l2_error(&self) -> F {
-        F::zero()
+        self.l2_error
     }
-    fn compute_residual_jacobian(fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
-        false
+    fn compute_residual_jacobian(&self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
+        self.crj.compute_resid_jacobian(fcn_eval, jacobian, &self.x)
     }
 }
