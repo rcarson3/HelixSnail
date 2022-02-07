@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Dot product of two vectors

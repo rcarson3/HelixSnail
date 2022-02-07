@@ -1,8 +1,23 @@
 #![allow(dead_code)]
 
-use super::*;
 use crate::linear_algebra::dot_prod;
+use crate::nonlinear_solver::*;
 
+/// The dogleg is an approach to solving the update step of a nonlinear system of equations.
+/// It is originally described in:
+/// M.J.D. Powell, “A new algorithm for unconstrained optimization”, in:
+/// J.B. Rosen, O.L. Mangasarian, and K. Ritter, eds., Nonlinear programming (Academic Press, New York, 1970).
+/// delta: the restriction placed on the allowable step size based on something like the trust-region
+/// residual_0: the previous time step solution residual
+/// newton_raphson_l2_norm: the l2 norm of the newton raphson solution of the nonlinear equation for a given step
+/// jacobian2_gradient: the square of the l2 norm of the J * J^T * residual product
+/// gradient: the J^T * residual product
+/// newton_raphson_step: the delta x if a full newton step is taken
+/// delta_x: the solution step based on the dogleg problem
+/// x: the updated solution at end of the dogleg problem
+/// predicted_residual: the predicted l2 norm of the updated residual calculated using the updated x
+/// use_newton_raphson: a simple flag just saying whether or not or dogleg method took the full NR step
+#[allow(clippy::too_many_arguments)]
 fn dogleg<const NDIM: usize, F>(
     delta: F,
     residual_0: F,
@@ -51,7 +66,7 @@ fn dogleg<const NDIM: usize, F>(
 
         // step along the dogleg path
         if norm_s_sd_opt >= delta {
-            // use step along steapest descent direction
+            // use step along steepest descent direction
             {
                 let factor: F = -delta * grad_l2_norm_inv;
                 for i in 0..NDIM {

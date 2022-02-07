@@ -48,6 +48,7 @@ pub trait NonlinearProblem<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps,
 {
+    // Fix me jacobian should be optional at some point...
     fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool;
     const NDIM: usize;
 }
