@@ -22,14 +22,14 @@ where
     /// Updates the acceptable step size of the nonlinear system
     ///
     /// # Arguments
-    /// * `delta` the acceptable step size
-    /// * `reject` whether or not the current solution should be rejected for a given iteration
-    /// * `rho` a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
-    /// * `res` the current iteration l2 norm of the residual
-    /// * `res0` the previous iteration l2 norm of the residual
-    /// * `pred_resid` the predicted l2 norm of the residual
-    /// * `norm_full` the l2 norm of a full step size of the solution
-    /// * `took_full` whether or not a full solution step size was taken
+    /// * `delta` - the acceptable step size
+    /// * `reject` - whether or not the current solution should be rejected for a given iteration
+    /// * `rho` - a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
+    /// * `res` - the current iteration l2 norm of the residual
+    /// * `res0` - the previous iteration l2 norm of the residual
+    /// * `pred_resid` - the predicted l2 norm of the residual
+    /// * `norm_full` - the l2 norm of a full step size of the solution
+    /// * `took_full` - whether or not a full solution step size was taken
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
