@@ -37,10 +37,9 @@ pub enum NonlinearSolverStatus {
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
-pub trait NonlinearSolver<F, DC>
+pub trait NonlinearSolver<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps,
-    DC: DeltaControl<F>,
 {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
     const NDIM: usize;
@@ -49,15 +48,8 @@ where
     /// # Arguments
     /// * `max_iter` - maximum number of iterations for the solver
     /// * `tolerance` - solution tolerance to be considered converged
-    /// * `delta_control` - object which controls the acceptable step size is in our solution step size
     /// * `output_level` - optional parameters which controls whether or not logging should occur
-    fn setup_solver(
-        &mut self,
-        max_iter: usize,
-        tolerance: F,
-        delta_control: &DC,
-        output_level: Option<i32>,
-    );
+    fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>);
     /// Sets a logging level if applicable to solver
     ///
     /// # Arguments
@@ -99,7 +91,7 @@ where
     ///
     /// # Outputs
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
-    fn compute_residual_jacobian(&self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool;
+    fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool;
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
