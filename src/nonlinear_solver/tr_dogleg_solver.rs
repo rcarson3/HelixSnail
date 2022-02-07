@@ -3,7 +3,7 @@
 
 use crate::nonlinear_solver::*;
 
-/// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver 
+/// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
 /// when a given step is near the solution.
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>

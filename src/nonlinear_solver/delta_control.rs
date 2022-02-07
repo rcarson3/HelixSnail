@@ -8,22 +8,28 @@ where
     /// Returns the initial acceptable step size of the solution
     fn get_delta_initial(&self) -> F;
     /// Decreases the acceptable step size
-    /// delta: the acceptable step size
-    /// norm_full: the l2 norm of a full step size of the solution
-    /// took_full: whether or not a full solution step size was taken
+    ///
+    /// # Arguments
+    /// * `delta` - the acceptable step size
+    /// * `norm_full` - the l2 norm of a full step size of the solution
+    /// * `took_full` - whether or not a full solution step size was taken
     fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool;
     /// Increases the acceptable step size
-    /// delta: the acceptable step size
+    ///
+    /// # Arguments
+    /// * `delta` - the acceptable step size
     fn increase_delta(&self, delta: &mut F);
     /// Updates the acceptable step size of the nonlinear system
-    /// delta: the acceptable step size
-    /// reject: whether or not the current solution should be rejected for a given iteration
-    /// rho: a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
-    /// res: the current iteration l2 norm of the residual
-    /// res0: the previous iteration l2 norm of the residual
-    /// pred_resid: the predicted l2 norm of the residual
-    /// norm_full: the l2 norm of a full step size of the solution
-    /// took_full: whether or not a full solution step size was taken
+    ///
+    /// # Arguments
+    /// * `delta` the acceptable step size
+    /// * `reject` whether or not the current solution should be rejected for a given iteration
+    /// * `rho` a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
+    /// * `res` the current iteration l2 norm of the residual
+    /// * `res0` the previous iteration l2 norm of the residual
+    /// * `pred_resid` the predicted l2 norm of the residual
+    /// * `norm_full` the l2 norm of a full step size of the solution
+    /// * `took_full` whether or not a full solution step size was taken
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
@@ -39,10 +45,11 @@ where
 }
 
 /// This defines the acceptable step size for the solution step based on a trust-region type method
+///
 /// Additional resources that might be of interest are:
-/// Chapter 6 of https://doi.org/10.1137/1.9781611971200.ch6
+/// Chapter 6 of <https://doi.org/10.1137/1.9781611971200.ch6>
 /// or the pseudo-algorithms / code for how to update things in
-/// Appendix A of https://doi.org/10.1137/1.9781611971200.appa
+/// Appendix A of <https://doi.org/10.1137/1.9781611971200.appa>
 /// Algorithm A6.4.5 contains variations of the below formulation of things
 pub struct TrustRegionDeltaControl<F>
 where
@@ -55,9 +62,13 @@ where
     pub xi_incr_delta: F,
     pub xi_decr_delta: F,
     pub xi_forced_incr_delta: F,
+    /// Initial step size for nonlinear solver
     pub delta_init: F,
+    /// Minimum step size for nonlinear solver
     pub delta_min: F,
+    /// Maximum step size for nonlinear solver
     pub delta_max: F,
+    /// Option to reject solutions that increase residual
     pub reject_resid_increase: bool,
 }
 
@@ -65,6 +76,7 @@ impl<F> TrustRegionDeltaControl<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps,
 {
+    /// Simple check to ensure that the parameters being used are consistent with one another and usable
     #[allow(dead_code)]
     fn check_params(&self) -> bool {
         !((self.delta_min <= F::zero())

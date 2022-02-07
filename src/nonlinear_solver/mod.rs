@@ -1,10 +1,14 @@
+/// The defines what an acceptable step size is in our solution step size
 pub mod delta_control;
+/// The dogleg is an approach to solving the update step of a nonlinear system of equations.
 pub mod dogleg;
+/// A dogleg solver that makes use of a trust-region method
 pub mod tr_dogleg_solver;
 
 pub use self::delta_control::*;
 pub use self::dogleg::*;
 pub use self::tr_dogleg_solver::*;
+
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Status of nonlinear solvers - status can range from converged, failure, and unconverged.
@@ -44,6 +48,7 @@ where
     fn compute_residual_jacobian(fcn_eval: &mut [F], jacobian: &mut [F]) -> bool;
 }
 
+/// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
 pub trait NonlinearProblem<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps,
