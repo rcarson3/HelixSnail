@@ -1,14 +1,17 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use crate::linear_algebra::{dot_prod, mat_t_vec_mult, mat_vec_mult, norm};
 use crate::nonlinear_solver::*;
+
+use log::info;
 
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
 /// when a given step is near the solution.
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
     [(); NP::NDIM]:,
 {
     pub x: [F; NP::NDIM],
@@ -28,7 +31,7 @@ where
 
 impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
 {
@@ -58,14 +61,27 @@ where
         }
     }
 
+    fn compute_newton_step(&self, jacobian: &[F], residual: &[F], newton_step: &mut [F]) {
+        unimplemented!();
+    }
+
+    fn reject(&mut self, delta_x: &[F]) {
+        assert!(delta_x.len() >= NP::NDIM);
+
+        for i_x in 0..NP::NDIM {
+            self.x[i_x] -= delta_x[i_x];
+        }
+    }
+
     fn solver_step(&mut self) {}
 }
 
 impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
+    [(); NP::NDIM * NP::NDIM]:,
 {
     const NDIM: usize = NP::NDIM;
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
@@ -79,9 +95,119 @@ where
             0
         };
     }
-    fn set_logging_level(output_level: Option<u32>) {}
+    fn set_logging_level(&mut self, output_level: Option<i32>) {
+        self.logging_level = if let Some(output) = output_level {
+            output
+        } else {
+            0
+        };
+    }
     fn solve(&mut self) -> NonlinearSolverStatus {
-        NonlinearSolverStatus::Unconverged
+        self.status = NonlinearSolverStatus::Unconverged;
+        self.num_iterations = 0;
+        self.function_evals = 0;
+        self.jacobian_evals = 0;
+
+        self.delta = self.delta_control.get_delta_initial();
+
+        if self.logging_level > 0 {
+            info!("Initial delta = {:?}", self.delta);
+        }
+
+        let mut residual = [F::zero(); NP::NDIM];
+        let mut jacobian = [F::zero(); NP::NDIM * NP::NDIM];
+
+        if !self.compute_residual_jacobian(&mut residual, &mut jacobian) {
+            self.status = NonlinearSolverStatus::InitialEvalFailure;
+            return self.status.clone();
+        }
+
+        self.l2_error = norm::<{ NP::NDIM }, F>(&residual);
+
+        let mut l2_error_0 = self.l2_error;
+
+        if self.logging_level > 0 {
+            info!("Initial residual = {:?}", self.l2_error);
+        }
+
+        let mut reject_previous = false;
+
+        let mut newton_raphson_step = [F::zero(); NP::NDIM];
+        let mut gradient = [F::zero(); NP::NDIM];
+        let mut delta_x = [F::zero(); NP::NDIM];
+        let mut jacob_grad_2 = F::zero();
+
+        while self.num_iterations < self.max_iterations {
+            self.num_iterations += 1;
+
+            if !reject_previous {
+                mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(
+                    &jacobian,
+                    &residual,
+                    &mut gradient,
+                );
+                let mut temp = [F::zero(); NP::NDIM];
+                mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
+                jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
+                self.compute_newton_step(&jacobian, &residual, &mut newton_raphson_step);
+            }
+
+            let mut predicted_residual = -F::one();
+            let mut use_newton_raphson = false;
+
+            let newton_raphson_l2_norm = norm::<{ NP::NDIM }, F>(&newton_raphson_step);
+
+            dogleg::<{ NP::NDIM }, F>(
+                self.delta,
+                l2_error_0,
+                newton_raphson_l2_norm,
+                jacob_grad_2,
+                &gradient,
+                &newton_raphson_step,
+                &mut delta_x,
+                &mut self.x,
+                &mut predicted_residual,
+                &mut use_newton_raphson,
+            );
+
+            reject_previous = false;
+
+            {
+                let resid_jacob_success =
+                    self.compute_residual_jacobian(&mut jacobian, &mut residual);
+                self.status = self.delta_control.update::<{ NP::NDIM }>(
+                    &residual,
+                    l2_error_0,
+                    predicted_residual,
+                    newton_raphson_l2_norm,
+                    self.solution_tolerance,
+                    use_newton_raphson,
+                    resid_jacob_success,
+                    self.logging_level,
+                    &mut self.delta,
+                    &mut self.rho_last,
+                    &mut self.l2_error,
+                    &mut reject_previous,
+                );
+
+                if self.status != NonlinearSolverStatus::Unconverged {
+                    break;
+                }
+            }
+
+            if reject_previous {
+                if self.logging_level > 0 {
+                    info!("Rejecting solution");
+                }
+
+                self.l2_error = l2_error_0;
+                self.reject(&delta_x);
+            }
+
+            l2_error_0 = self.l2_error;
+        }
+
+        self.status.clone()
     }
     fn get_num_fcn_evals(&self) -> usize {
         self.num_iterations

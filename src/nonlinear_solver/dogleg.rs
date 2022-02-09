@@ -33,7 +33,7 @@ pub fn dogleg<const NDIM: usize, F>(
     predicted_residual: &mut F,
     use_newton_raphson: &mut bool,
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
     f64: Into<F>,
 {
     assert!(gradient.len() >= NDIM);

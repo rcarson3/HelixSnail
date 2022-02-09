@@ -12,6 +12,7 @@ pub use self::tr_dogleg_solver::*;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Status of nonlinear solvers - status can range from converged, failure, and unconverged.
+#[derive(Clone, PartialEq)]
 pub enum NonlinearSolverStatus {
     /// Solution has converged
     Converged,
@@ -39,7 +40,7 @@ pub enum NonlinearSolverStatus {
 /// expect a square system of equations in order to work.
 pub trait NonlinearSolver<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
 {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
     const NDIM: usize;
@@ -54,7 +55,7 @@ where
     ///
     /// # Arguments
     /// * `output_level` - optional parameters which controls the level of logging within solver
-    fn set_logging_level(output_level: Option<u32>);
+    fn set_logging_level(&mut self, output_level: Option<i32>);
     /// Solves the nonlinear system of equations
     ///
     /// # Outputs
@@ -97,7 +98,7 @@ where
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
 pub trait NonlinearProblem<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
 {
     // Fix me jacobian should be optional at some point...
     fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool;

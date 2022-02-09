@@ -1,4 +1,8 @@
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
+use log::info;
+
+use crate::linear_algebra::norm;
+use crate::nonlinear_solver::NonlinearSolverStatus;
 
 /// The DeltaControl trait is used to define what an acceptable step size is in our solution step size
 pub trait DeltaControl<F>
@@ -53,7 +57,7 @@ where
 /// Algorithm A6.4.5 contains variations of the below formulation of things
 pub struct TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
 {
     pub xi_lg: F,
     pub xi_ug: F,
@@ -74,7 +78,7 @@ where
 
 impl<F> TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
 {
     /// Simple check to ensure that the parameters being used are consistent with one another and usable
     #[allow(dead_code)]
@@ -87,11 +91,64 @@ where
             || ((self.xi_decr_delta >= F::one()) || (self.xi_decr_delta <= F::zero()))
             || (self.xi_forced_incr_delta <= F::zero()))
     }
+
+    pub fn update<const NDIM: usize>(
+        &self,
+        residual: &[F],
+        l2_error_0: F,
+        predicted_residual: F,
+        newton_raphson_norm: F,
+        tolerance: F,
+        use_newton_raphson: bool,
+        resid_jacob_success: bool,
+        logging_level: i32,
+        delta: &mut F,
+        rho_last: &mut F,
+        l2_error: &mut F,
+        reject_previous: &mut bool,
+    ) -> NonlinearSolverStatus {
+        if !resid_jacob_success {
+            let delta_success = self.decrease_delta(delta, newton_raphson_norm, use_newton_raphson);
+            if !delta_success {
+                return NonlinearSolverStatus::DeltaFailure;
+            }
+            *reject_previous = false;
+        } else {
+            *l2_error = norm::<{ NDIM }, F>(residual);
+            if logging_level > 0 {
+                info!("L2_error equals {:?}", *l2_error);
+            }
+        }
+
+        if *l2_error < tolerance {
+            if logging_level > 0 {
+                info!("Solution converged");
+            }
+            return NonlinearSolverStatus::Converged;
+        }
+
+        {
+            let delta_success = self.update_delta(
+                delta,
+                reject_previous,
+                rho_last,
+                *l2_error,
+                l2_error_0,
+                predicted_residual,
+                use_newton_raphson,
+                newton_raphson_norm,
+            );
+            if !delta_success {
+                return NonlinearSolverStatus::DeltaFailure;
+            }
+        }
+        NonlinearSolverStatus::Unconverged
+    }
 }
 
 impl<F> DeltaControl<F> for TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
 {
     fn get_delta_initial(&self) -> F {
         self.delta_init
