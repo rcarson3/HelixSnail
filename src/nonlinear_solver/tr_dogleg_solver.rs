@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use crate::linear_algebra::{dot_prod, mat_t_vec_mult, mat_vec_mult, norm};
+use crate::linear_algebra::{dot_prod, mat_t_vec_mult, mat_vec_mult, norm, lup_solver};
 use crate::nonlinear_solver::*;
 
 use log::info;
@@ -61,8 +61,14 @@ where
         }
     }
 
-    fn compute_newton_step(&self, jacobian: &[F], residual: &[F], newton_step: &mut [F]) {
-        unimplemented!();
+    fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F])
+    where
+    [(); NP::NDIM + 1]:,
+    {
+        lup_solver::<{NP::NDIM}, F>(jacobian, newton_step, residual);
+        for i in 0..NP::NDIM {
+            newton_step[i] *= -F::one();
+        }
     }
 
     fn reject(&mut self, delta_x: &[F]) {
@@ -82,6 +88,7 @@ where
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
     [(); NP::NDIM * NP::NDIM]:,
+    [(); NP::NDIM + 1]:,
 {
     const NDIM: usize = NP::NDIM;
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
@@ -102,7 +109,8 @@ where
             0
         };
     }
-    fn solve(&mut self) -> NonlinearSolverStatus {
+    fn solve(&mut self) -> NonlinearSolverStatus
+    {
         self.status = NonlinearSolverStatus::Unconverged;
         self.num_iterations = 0;
         self.function_evals = 0;
@@ -149,7 +157,7 @@ where
                 let mut temp = [F::zero(); NP::NDIM];
                 mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
                 jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
-                self.compute_newton_step(&jacobian, &residual, &mut newton_raphson_step);
+                self.compute_newton_step(&mut jacobian, &mut newton_raphson_step, &residual);
             }
 
             let mut predicted_residual = -F::one();
