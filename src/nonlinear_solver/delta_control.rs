@@ -83,6 +83,20 @@ where
     /// Sane default values for the delta control
     /// One can generally play around with values of xi_* to help their system
     /// potentially converge when dealing with a nasty problem.
+    ///
+    /// TrustRegionDeltaControl::<F> {
+    ///     xi_lg: F::from(0.75).unwrap(),
+    ///     xi_ug: F::from(1.4).unwrap(),
+    ///     xi_lo: F::from(0.35).unwrap(),
+    ///     xi_uo: F::from(5.0).unwrap(),
+    ///     xi_incr_delta: F::from(1.5).unwrap(),
+    ///     xi_decr_delta: F::from(0.25).unwrap(),
+    ///     xi_forced_incr_delta: F::from(1.2).unwrap(),
+    ///     delta_init: F::from(1.0).unwrap(),
+    ///     delta_min: F::from(1e-12).unwrap(),
+    ///     delta_max: F::from(1e4).unwrap(),
+    ///     reject_resid_increase: true,
+    /// }
     fn default() -> TrustRegionDeltaControl<F> {
         TrustRegionDeltaControl::<F> {
             xi_lg: F::from(0.75).unwrap(),
