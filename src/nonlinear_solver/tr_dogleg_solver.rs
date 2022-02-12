@@ -14,18 +14,32 @@ where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     [(); NP::NDIM]:,
 {
+    /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
+    /// a numerically stable system of equations.
     pub x: [F; NP::NDIM],
+    /// This controls the step size that our solver takes while iterating for a solution 
     delta_control: &'a TrustRegionDeltaControl<F>,
+    /// The total number of function evaluations our solver took
     function_evals: usize,
+    /// The total number of jacobian evaluations our solver took
     jacobian_evals: usize,
+    /// The number of iterations it took to solve the nonlinear system
     num_iterations: usize,
+    /// The maximum number of iterations we want our solver to take before failing
     max_iterations: usize,
+    /// The tolerance we want on our solution
     solution_tolerance: F,
+    /// The L2 error of our solution = || F(x) ||_L2
     l2_error: F,
+    /// The step size our solver is allowed to take
     delta: F,
+    /// The normalized ratio between our predicted error and our actual error
     rho_last: F,
+    /// The structure that can calculate the residual / func evaluation and the jacobian of the residual
     crj: &'a mut NP,
+    /// The status of our nonlinear solve
     status: NonlinearSolverStatus,
+    /// The logging level where any level below 1 is considered off
     logging_level: i32,
 }
 
@@ -35,8 +49,18 @@ where
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
 {
+    /// The size of the jacobian
     const NDIM2: usize = NP::NDIM * NP::NDIM;
 
+    /// Creates a new solver with default values for a number of fields when provided the delta control
+    /// and the nonlinear problem structure
+    /// 
+    /// # Arguments:
+    /// * `delta_control` - controls the step size that our solver takes while iterating for a solution
+    /// * `crj` - Our nonlinear problem which can calculate the residual / func evaluation and the jacobian of the residual
+    /// 
+    /// # Outputs:
+    /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
     pub fn new(
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
@@ -58,6 +82,7 @@ where
         }
     }
 
+    /// Computes the newton step for a given iteration
     fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F])
     where
         [(); NP::NDIM + 1]:,
@@ -68,6 +93,7 @@ where
         }
     }
 
+    /// Rejects the current iterations solution and returns the solution to its previous value
     fn reject(&mut self, delta_x: &[F]) {
         assert!(delta_x.len() >= NP::NDIM);
 
@@ -75,8 +101,6 @@ where
             self.x[i_x] -= delta_x[i_x];
         }
     }
-
-    fn solver_step(&mut self) {}
 }
 
 impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
@@ -210,6 +234,10 @@ where
             }
 
             l2_error_0 = self.l2_error;
+        }
+
+        if self.num_iterations >= self.max_iterations {
+            self.status = NonlinearSolverStatus::UnconvergedMaxIter;
         }
 
         if self.logging_level > 0 {

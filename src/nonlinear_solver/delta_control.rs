@@ -80,6 +80,9 @@ impl<F> Default for TrustRegionDeltaControl<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
+    /// Sane default values for the delta control
+    /// One can generally play around with values of xi_* to help their system
+    /// potentially converge when dealing with a nasty problem.
     fn default() -> TrustRegionDeltaControl<F> {
         TrustRegionDeltaControl::<F> {
             xi_lg: F::from(0.75).unwrap(),
@@ -113,6 +116,23 @@ where
             || (self.xi_forced_incr_delta <= F::zero()))
     }
 
+    /// Updates the acceptable step size of the nonlinear system and also examines
+    /// to see if our solution has converged, failed, or our current solution needs
+    /// to be rejected and we need to try again with a smaller delta.
+    ///
+    /// # Arguments
+    /// * `residual` - the acceptable step size
+    /// * `l2_error_0` - the previous iteration l2 norm of the residual
+    /// * `predicted_residual` - the predicted l2 norm of the residual
+    /// * `newton_raphson_norm` - the l2 norm of a full step size of the solution
+    /// * `tolerance` - the error tolerance of our solution
+    /// * `use_newton_raphson`  - whether or not a full solution step size was taken
+    /// * `resid_jacob_success` - whether or not the compute residual / jacobian function failed
+    /// * `logging_level` - the logging level
+    /// * `delta` - the acceptable step size
+    /// * `rho_last` - a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
+    /// * `l2_error` - the current iteration l2 norm of the residual
+    /// * `reject_previous` - whether or not the current solution should be rejected for a given iteration 
     pub fn update<const NDIM: usize>(
         &self,
         residual: &[F],
