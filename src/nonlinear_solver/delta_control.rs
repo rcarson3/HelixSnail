@@ -80,8 +80,7 @@ impl<F> Default for TrustRegionDeltaControl<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    fn default() -> TrustRegionDeltaControl<F>
-    {
+    fn default() -> TrustRegionDeltaControl<F> {
         TrustRegionDeltaControl::<F> {
             xi_lg: F::from(0.75).unwrap(),
             xi_ug: F::from(1.4).unwrap(),

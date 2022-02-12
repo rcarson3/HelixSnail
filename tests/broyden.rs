@@ -49,14 +49,11 @@ where
 
         fcn_eval[0] = (three - two * x[0]) * x[0] - two * x[1] + F::one();
         for i in 1..(Self::NDIM - 1) {
-            fcn_eval[i] =
-                (three - two * x[i]) * x[i] - x[i - 1] - two * x[i + 1]
-                    + F::one();
+            fcn_eval[i] = (three - two * x[i]) * x[i] - x[i - 1] - two * x[i + 1] + F::one();
         }
 
-        let fcn = (three - two * x[Self::NDIM - 1]) * x[Self::NDIM - 1]
-            - x[Self::NDIM - 2]
-            + F::one();
+        let fcn =
+            (three - two * x[Self::NDIM - 1]) * x[Self::NDIM - 1] - x[Self::NDIM - 2] + F::one();
 
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 

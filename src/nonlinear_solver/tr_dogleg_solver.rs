@@ -40,8 +40,7 @@ where
     pub fn new(
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
-    ) -> TrustRegionDoglegSolver<'a, F, NP>
-    {
+    ) -> TrustRegionDoglegSolver<'a, F, NP> {
         TrustRegionDoglegSolver::<'a, F, NP> {
             x: [F::zero(); NP::NDIM],
             delta_control: delta_control,
