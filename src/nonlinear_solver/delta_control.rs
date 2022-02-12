@@ -57,7 +57,7 @@ where
 /// Algorithm A6.4.5 contains variations of the below formulation of things
 pub struct TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     pub xi_lg: F,
     pub xi_ug: F,
@@ -78,23 +78,21 @@ where
 
 impl<F> Default for TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     fn default() -> TrustRegionDeltaControl<F>
-    where
-        f64: Into<F>,
     {
         TrustRegionDeltaControl::<F> {
-            xi_lg: 0.75.into(),
-            xi_ug: 1.4.into(),
-            xi_lo: 0.35.into(),
-            xi_uo: 5.0.into(),
-            xi_incr_delta: 1.5.into(),
-            xi_decr_delta: 0.25.into(),
-            xi_forced_incr_delta: 1.2.into(),
-            delta_init: 1.0.into(),
-            delta_min: 1e-12.into(),
-            delta_max: 1e4.into(),
+            xi_lg: F::from(0.75).unwrap(),
+            xi_ug: F::from(1.4).unwrap(),
+            xi_lo: F::from(0.35).unwrap(),
+            xi_uo: F::from(5.0).unwrap(),
+            xi_incr_delta: F::from(1.5).unwrap(),
+            xi_decr_delta: F::from(0.25).unwrap(),
+            xi_forced_incr_delta: F::from(1.2).unwrap(),
+            delta_init: F::from(1.0).unwrap(),
+            delta_min: F::from(1e-12).unwrap(),
+            delta_max: F::from(1e4).unwrap(),
             reject_resid_increase: true,
         }
     }
@@ -102,7 +100,7 @@ where
 
 impl<F> TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     /// Simple check to ensure that the parameters being used are consistent with one another and usable
     #[allow(dead_code)]
@@ -172,7 +170,7 @@ where
 
 impl<F> DeltaControl<F> for TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     fn get_delta_initial(&self) -> F {
         self.delta_init

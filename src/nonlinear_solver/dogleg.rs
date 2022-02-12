@@ -33,8 +33,7 @@ pub fn dogleg<const NDIM: usize, F>(
     predicted_residual: &mut F,
     use_newton_raphson: &mut bool,
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
-    f64: Into<F>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(gradient.len() >= NDIM);
     assert!(newton_raphson_step.len() >= NDIM);
@@ -79,13 +78,13 @@ pub fn dogleg<const NDIM: usize, F>(
 
             {
                 let val: F = -(delta * grad_l2_norm)
-                    + 0.5.into()
+                    + F::from(0.5).unwrap()
                         * delta
                         * delta
                         * jacobian2_gradient
                         * (grad_l2_norm_inv * grad_l2_norm_inv);
                 *predicted_residual = F::sqrt(F::max(
-                    2.0.into() * val + residual_0 * residual_0,
+                    F::from(2.0).unwrap() * val + residual_0 * residual_0,
                     F::zero(),
                 ));
             }

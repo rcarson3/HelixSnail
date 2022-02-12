@@ -13,7 +13,7 @@ pub(crate) fn lup_decompose<const NDIM: usize, F>(
     tolerance: F,
 ) -> SolverError
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() >= NDIM + 1);
     assert!(matrix.len() >= NDIM * NDIM);
@@ -75,7 +75,7 @@ pub(crate) fn lup_solve<const NDIM: usize, F>(
     rhs: &[F],
     pivot: &[usize],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() >= NDIM + 1);
     assert!(solution.len() >= NDIM);
@@ -104,7 +104,7 @@ pub(crate) fn lup_solver<const NDIM: usize, F>(
     rhs: &[F],
 ) -> SolverError
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     [(); NDIM + 1]:,
 {
     assert!(solution.len() >= NDIM);
@@ -112,7 +112,7 @@ where
     assert!(matrix.len() >= NDIM * NDIM);
 
     let mut pivot = [0; NDIM + 1];
-    let tolerance = 1e-50.into();
+    let tolerance: F = F::from(1e-50).unwrap();
 
     let error = lup_decompose::<{ NDIM }, F>(matrix, &mut pivot, tolerance);
 

@@ -11,7 +11,7 @@ use log::info;
 /// when a given step is near the solution.
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     [(); NP::NDIM]:,
 {
     pub x: [F; NP::NDIM],
@@ -31,7 +31,7 @@ where
 
 impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
 {
@@ -41,8 +41,6 @@ where
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
     ) -> TrustRegionDoglegSolver<'a, F, NP>
-    where
-        f64: Into<F>,
     {
         TrustRegionDoglegSolver::<'a, F, NP> {
             x: [F::zero(); NP::NDIM],
@@ -51,9 +49,9 @@ where
             jacobian_evals: 0,
             num_iterations: 0,
             max_iterations: NP::NDIM * 1000,
-            solution_tolerance: 1e-12.into(),
-            l2_error: -1.0.into(),
-            delta: 1e8.into(),
+            solution_tolerance: F::from(1e-12).unwrap(),
+            l2_error: -F::one(),
+            delta: F::from(1e8).unwrap(),
             rho_last: F::one(),
             crj: crj,
             status: NonlinearSolverStatus::Unconverged,
@@ -84,7 +82,7 @@ where
 
 impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
     [(); NP::NDIM * NP::NDIM]:,
@@ -95,6 +93,7 @@ where
         self.status = NonlinearSolverStatus::Unconverged;
         self.function_evals = 0;
         self.max_iterations = max_iter;
+        self.solution_tolerance = tolerance;
 
         self.logging_level = if let Some(output) = output_level {
             output

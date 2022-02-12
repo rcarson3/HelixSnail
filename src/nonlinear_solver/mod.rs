@@ -40,7 +40,7 @@ pub enum NonlinearSolverStatus {
 /// expect a square system of equations in order to work.
 pub trait NonlinearSolver<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
     const NDIM: usize;
@@ -98,7 +98,7 @@ where
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
 pub trait NonlinearProblem<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     // Fix me jacobian should be optional at some point...
     fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool;
