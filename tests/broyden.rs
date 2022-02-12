@@ -10,6 +10,24 @@ use log::info;
 
 const LOGGING_LEVEL: i32 = 0;
 
+/**
+  Comment as in the Trilinos NOX package:
+  
+  This test problem is a modified extension of the "Broyden
+  Tridiagonal Problem" from Jorge J. More', Burton S. Garbow, and
+  Kenneth E. Hillstrom, Testing Unconstrained Optimization Software,
+  ACM TOMS, Vol. 7, No. 1, March 1981, pp. 14-41.  The modification
+  involves squaring the last equation fn(x) and using it in a
+  homotopy-type equation.
+  The parameter "lambda" is a homotopy-type parameter that may be
+  varied from 0 to 1 to adjust the ill-conditioning of the problem.
+  A value of 0 is the original, unmodified problem, while a value of
+  1 is that problem with the last equation squared.  Typical values
+  for increasingly ill-conditioned problems might be 0.9, 0.99,
+  0.999, etc.
+  The standard starting point is x(i) = -1, but setting x(i) = 0 tests
+  the selected global strategy.
+*/
 struct Broyden<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
@@ -23,13 +41,8 @@ where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     const NDIM: usize = 8;
-    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool {
+    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>, x: &[F]) -> bool {
         assert!(fcn_eval.len() >= Self::NDIM);
-        assert!(
-            jacobian.len() >= Self::NDIM * Self::NDIM,
-            "length {:?}",
-            jacobian.len()
-        );
         assert!(x.len() >= Self::NDIM);
 
         let two: F = F::from(2.0).unwrap();
@@ -43,10 +56,6 @@ where
             }
         }
 
-        for ij in 0..(Self::NDIM * Self::NDIM) {
-            jacobian[ij] = F::zero();
-        }
-
         fcn_eval[0] = (three - two * x[0]) * x[0] - two * x[1] + F::one();
         for i in 1..(Self::NDIM - 1) {
             fcn_eval[i] = (three - two * x[i]) * x[i] - x[i - 1] - two * x[i + 1] + F::one();
@@ -57,21 +66,33 @@ where
 
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
-        jacobian[0 * Self::NDIM + 0] = three - four * x[0];
-        jacobian[0 * Self::NDIM + 1] = -two;
-        // F(i) = (3-2*x[i])*x[i] - x[i-1] - 2*x[i+1] + 1;
-        for i in 1..(Self::NDIM - 1) {
-            jacobian[i * Self::NDIM + i - 1] = -F::one();
-            jacobian[i * Self::NDIM + i] = three - four * x[i];
-            jacobian[i * Self::NDIM + i + 1] = -two;
-        }
+        if let Some(jacobian) = opt_jacobian {
+            assert!(
+                jacobian.len() >= Self::NDIM * Self::NDIM,
+                "length {:?}",
+                jacobian.len()
+            );
 
-        let dfndxn = three - four * x[Self::NDIM - 1];
-        // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
-        jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 1)] =
-            (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
-        jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 2)] =
-            (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn;
+            for ij in 0..(Self::NDIM * Self::NDIM) {
+                jacobian[ij] = F::zero();
+            }
+            
+            jacobian[0 * Self::NDIM + 0] = three - four * x[0];
+            jacobian[0 * Self::NDIM + 1] = -two;
+            // F(i) = (3-2*x[i])*x[i] - x[i-1] - 2*x[i+1] + 1;
+            for i in 1..(Self::NDIM - 1) {
+                jacobian[i * Self::NDIM + i - 1] = -F::one();
+                jacobian[i * Self::NDIM + i] = three - four * x[i];
+                jacobian[i * Self::NDIM + i + 1] = -two;
+            }
+    
+            let dfndxn = three - four * x[Self::NDIM - 1];
+            // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
+            jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 1)] =
+                (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
+            jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 2)] =
+                (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn;    
+        }
 
         true
     }

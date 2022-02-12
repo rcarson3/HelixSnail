@@ -100,8 +100,12 @@ pub trait NonlinearProblem<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    // Fix me jacobian should be optional at some point...
-    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F], x: &[F]) -> bool;
+    /// This function at a minimum computes the residual / function evaluation of the system of nonlinear equations
+    /// that we are solving for.
+    /// The jacobian is an optional parameter that if provided the jacobian to the function is also solved provided.
+    /// For the solvers within this library, it is expected that jacobian is provided back to us as we don't make
+    /// use of finite difference methods to estimate the jacobian.
+    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>, x: &[F]) -> bool;
     /// Dimension of the nonlinear system of equations
     const NDIM: usize;
 }

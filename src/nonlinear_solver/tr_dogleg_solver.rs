@@ -245,6 +245,6 @@ where
         self.l2_error
     }
     fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
-        self.crj.compute_resid_jacobian(fcn_eval, jacobian, &self.x)
+        self.crj.compute_resid_jacobian(fcn_eval, Some(jacobian), &self.x)
     }
 }
