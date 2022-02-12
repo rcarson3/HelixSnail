@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use crate::linear_algebra::{dot_prod, mat_t_vec_mult, mat_vec_mult, norm, lup_solver};
+use crate::linear_algebra::{dot_prod, lup_solver, mat_t_vec_mult, mat_vec_mult, norm};
 use crate::nonlinear_solver::*;
 
 use log::info;
@@ -63,9 +63,9 @@ where
 
     fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F])
     where
-    [(); NP::NDIM + 1]:,
+        [(); NP::NDIM + 1]:,
     {
-        lup_solver::<{NP::NDIM}, F>(jacobian, newton_step, residual);
+        lup_solver::<{ NP::NDIM }, F>(jacobian, newton_step, residual);
         for i in 0..NP::NDIM {
             newton_step[i] *= -F::one();
         }
@@ -109,8 +109,7 @@ where
             0
         };
     }
-    fn solve(&mut self) -> NonlinearSolverStatus
-    {
+    fn solve(&mut self) -> NonlinearSolverStatus {
         self.status = NonlinearSolverStatus::Unconverged;
         self.num_iterations = 0;
         self.function_evals = 0;
@@ -182,7 +181,7 @@ where
 
             {
                 let resid_jacob_success =
-                    self.compute_residual_jacobian(&mut jacobian, &mut residual);
+                    self.compute_residual_jacobian(&mut residual, &mut jacobian);
                 self.status = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
@@ -215,6 +214,24 @@ where
             l2_error_0 = self.l2_error;
         }
 
+        if self.logging_level > 0 {
+            match self.status {
+                NonlinearSolverStatus::AlgorithmFailure => info!("Solver status algorithm failure"),
+                NonlinearSolverStatus::Converged => info!("Solver status converged"),
+                NonlinearSolverStatus::DeltaFailure => info!("Solver status delta failure"),
+                NonlinearSolverStatus::EvalFailure => info!("Solver status eval failure"),
+                NonlinearSolverStatus::InitialEvalFailure => {
+                    info!("Solver status initial eval failure")
+                }
+                NonlinearSolverStatus::SlowConvergence => info!("Solver status slow convergence"),
+                NonlinearSolverStatus::SlowJacobian => info!("Solver status slow jacobian status"),
+                NonlinearSolverStatus::Unconverged => info!("Solver status unconverged"),
+                NonlinearSolverStatus::UnconvergedMaxIter => {
+                    info!("Solver status unconverged max iterations")
+                }
+                NonlinearSolverStatus::Unset => info!("Solver status unset"),
+            }
+        }
         self.status.clone()
     }
     fn get_num_fcn_evals(&self) -> usize {

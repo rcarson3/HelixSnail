@@ -76,6 +76,30 @@ where
     pub reject_resid_increase: bool,
 }
 
+impl<F> Default for TrustRegionDeltaControl<F>
+where
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
+{
+    fn default() -> TrustRegionDeltaControl<F>
+    where
+        f64: Into<F>,
+    {
+        TrustRegionDeltaControl::<F> {
+            xi_lg: 0.75.into(),
+            xi_ug: 1.4.into(),
+            xi_lo: 0.35.into(),
+            xi_uo: 5.0.into(),
+            xi_incr_delta: 1.5.into(),
+            xi_decr_delta: 0.25.into(),
+            xi_forced_incr_delta: 1.2.into(),
+            delta_init: 1.0.into(),
+            delta_min: 1e-12.into(),
+            delta_max: 1e4.into(),
+            reject_resid_increase: true,
+        }
+    }
+}
+
 impl<F> TrustRegionDeltaControl<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug + core::convert::From<f64>,
@@ -186,7 +210,7 @@ where
     ) -> bool {
         let actual_change = res - res0;
         let pred_change = pred_resid - res0;
-        let mut success = false;
+        let mut success = true;
 
         if pred_change == F::zero() {
             if *delta >= self.delta_max {
@@ -204,7 +228,6 @@ where
             }
         }
         *reject = false;
-
         if (actual_change > F::zero()) && (self.reject_resid_increase) {
             *reject = true;
         }
