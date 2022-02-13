@@ -14,3 +14,4 @@ linear_algebra = []
 
 [dev-dependencies]
 env_logger = {version = "0.9.0", default-features = false}
+paste = {version = "1.0.6"}
