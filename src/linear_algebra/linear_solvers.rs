@@ -10,16 +10,15 @@ pub enum SolverError {
     NoError,
 }
 
-
 /// Decomposes our matrix into a partially pivoted LU decomposition, we supply a tolerance
 /// for which the pivot is allowed to fail due to a row being nominally all zeros.
-/// 
+///
 /// # Arguments:
 /// * `matrix` - the matrix that is going to have the in-place partially pivoted LU decomposition occur and has a size of NDIM * NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
 /// * `tolerance` - the tolerance in which we say a given value is zero
-/// 
+///
 /// # Outputs:
 /// A solver error which tells us why the linear solver failed
 pub fn lup_decompose<const NDIM: usize, F>(
@@ -86,19 +85,15 @@ where
 
 /// This performs the solve of the system given a factorized A matrix in the form of P L U
 /// It performs forward and back substitution in order to solve for the system
-/// 
+///
 /// # Arguments:
 /// * `solution` - the solution vector we're solving for which has a size of NDIM
 /// * `matrix` - the partially pivoted LU decomposed A matrix which has a size of NDIM * NDIM
 /// * `rhs` - the RHS of the system of equations we're solving for which has a size of NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
-pub fn lup_solve<const NDIM: usize, F>(
-    solution: &mut [F],
-    matrix: &[F],
-    rhs: &[F],
-    pivot: &[usize],
-) where
+pub fn lup_solve<const NDIM: usize, F>(solution: &mut [F], matrix: &[F], rhs: &[F], pivot: &[usize])
+where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() >= NDIM + 1);
@@ -126,7 +121,7 @@ pub fn lup_solve<const NDIM: usize, F>(
 /// For this solve, the decomposition is done in place on the matrix which is acceptable given
 /// that we never use matrix afterwards.
 /// We are solving for Ax = b where A = P L U
-/// 
+///
 /// # Arguments:
 /// * `matrix` - the A matrix up above which has a size of NDIM * NDIM
 /// * `solution` - the x vector up above which has a size of NDIM

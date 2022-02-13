@@ -104,13 +104,18 @@ where
     /// that we are solving for. It is expected that fcn_eval and opt_jacobian have been scaled such that the solution
     /// variable x nominally remains in the neighborhood of [-1, 1] as this provides better numerical stability of
     /// the solution.
-    /// 
+    ///
     /// # Arguments
     /// * fcn_eval - the residual / function evaluation of the nonlinear problem: size NDIM
     /// * opt_jacobian - (Optional) the derivative of the residual with respect to the solution variable: size NDIM * NDIM
     ///                   For the solvers within this library, it is expected that jacobian is provided back to us if we pass in a slice
     ///                   as we don't make use of finite difference methods to estimate the jacobian.
-    fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>, x: &[F]) -> bool;
+    fn compute_resid_jacobian(
+        &mut self,
+        fcn_eval: &mut [F],
+        opt_jacobian: Option<&mut [F]>,
+        x: &[F],
+    ) -> bool;
     /// Dimension of the nonlinear system of equations
     const NDIM: usize;
 }

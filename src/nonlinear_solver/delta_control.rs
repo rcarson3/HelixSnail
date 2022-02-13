@@ -146,7 +146,7 @@ where
     /// * `delta` - the acceptable step size
     /// * `rho_last` - a normalized ratio between the actual l2 error of the residual and the predicted l2 error of the residual
     /// * `l2_error` - the current iteration l2 norm of the residual
-    /// * `reject_previous` - whether or not the current solution should be rejected for a given iteration 
+    /// * `reject_previous` - whether or not the current solution should be rejected for a given iteration
     pub fn update<const NDIM: usize>(
         &self,
         residual: &[F],

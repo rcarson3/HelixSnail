@@ -62,11 +62,8 @@ where
 /// vec1 has length NDIM
 /// vec2 has length MDIM
 /// matrix has dimensions NDIM x MDIM
-pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
-    vec1: &[F],
-    vec2: &[F],
-    matrix: &mut [F],
-) where
+pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(vec1: &[F], vec2: &[F], matrix: &mut [F])
+where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(matrix.len() >= MDIM * NDIM);

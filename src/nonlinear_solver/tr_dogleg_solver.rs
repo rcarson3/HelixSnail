@@ -17,7 +17,7 @@ where
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
     pub x: [F; NP::NDIM],
-    /// This controls the step size that our solver takes while iterating for a solution 
+    /// This controls the step size that our solver takes while iterating for a solution
     delta_control: &'a TrustRegionDeltaControl<F>,
     /// The total number of function evaluations our solver took
     function_evals: usize,
@@ -54,11 +54,11 @@ where
 
     /// Creates a new solver with default values for a number of fields when provided the delta control
     /// and the nonlinear problem structure
-    /// 
+    ///
     /// # Arguments:
     /// * `delta_control` - controls the step size that our solver takes while iterating for a solution
     /// * `crj` - Our nonlinear problem which can calculate the residual / func evaluation and the jacobian of the residual
-    /// 
+    ///
     /// # Outputs:
     /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
     pub fn new(
@@ -273,6 +273,7 @@ where
         self.l2_error
     }
     fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
-        self.crj.compute_resid_jacobian(fcn_eval, Some(jacobian), &self.x)
+        self.crj
+            .compute_resid_jacobian(fcn_eval, Some(jacobian), &self.x)
     }
 }
