@@ -3,7 +3,7 @@ use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Dot product of two vectors
 /// vec1 and vec2 both have lengths NDIM
-pub(crate) fn dot_prod<const NDIM: usize, F>(vec1: &[F], vec2: &[F]) -> F
+pub fn dot_prod<const NDIM: usize, F>(vec1: &[F], vec2: &[F]) -> F
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -21,7 +21,7 @@ where
 // Might want a stable norm eventually
 /// Takes the L2 norm of a vector
 /// where vec has length NDIM
-pub(crate) fn norm<const NDIM: usize, F>(vec: &[F]) -> F
+pub fn norm<const NDIM: usize, F>(vec: &[F]) -> F
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -32,7 +32,7 @@ where
 /// Takes the norm of the columns of a matrix
 /// where the matrix has dimensions NDIM x MDIM
 /// The values are stored in norm_vec which is of length m
-pub(crate) fn norm_column<const NDIM: usize, const MDIM: usize, F>(matrix: &[F], norm_vec: &mut [F])
+pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(matrix: &[F], norm_vec: &mut [F])
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -62,7 +62,7 @@ where
 /// vec1 has length NDIM
 /// vec2 has length MDIM
 /// matrix has dimensions NDIM x MDIM
-pub(crate) fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
+pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
     vec1: &[F],
     vec2: &[F],
     matrix: &mut [F],
@@ -86,7 +86,7 @@ pub(crate) fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
 /// vec2 has length MDIM
 /// scale is an Option type and if supplied None defaults to a value of 1.0
 /// matrix has dimensions NDIM x MDIM
-pub(crate) fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
+pub fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
     vec1: &[F],
     vec2: &[F],
     scale: Option<F>,
@@ -111,7 +111,7 @@ pub(crate) fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
 /// matrix has dimensions NDIM x MDIM
 /// vec has dimensions MDIM
 /// prod has dimensions NDIM
-pub(crate) fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
+pub fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     matrix: &[F],
     vec: &[F],
     prod: &mut [F],
@@ -133,7 +133,7 @@ pub(crate) fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// matrix has dimensions NDIM x MDIM
 /// vec has dimensions NDIM
 /// prod has dimensions MDIM
-pub(crate) fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
+pub fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     matrix: &[F],
     vec: &[F],
     prod: &mut [F],
@@ -159,7 +159,7 @@ pub(crate) fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// vec has dimensions MDIM
 /// prod has dimensions NDIM
 /// NDIM <= MDIM
-pub(crate) fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
+pub fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     matrix: &[F],
     vec: &[F],
     prod: &mut [F],
@@ -186,7 +186,7 @@ pub(crate) fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// vec has dimensions MDIM
 /// prod has dimensions NDIM
 /// NDIM <= MDIM
-pub(crate) fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
+pub fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     matrix: &[F],
     vec: &[F],
     prod: &mut [F],
@@ -216,7 +216,7 @@ pub(crate) fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// the multiplication on the product,
 /// or it will zero out the product ahead of time
 /// depending on the compile time flag.
-pub(crate) fn mat_mat_mult<
+pub fn mat_mat_mult<
     const LDIM: usize,
     const NDIM: usize,
     const MDIM: usize,
@@ -258,7 +258,7 @@ pub(crate) fn mat_mat_mult<
 /// the multiplication on the product,
 /// or it will zero out the product ahead of time
 /// depending on the run time flag.
-pub(crate) fn mat_t_mat_mult<
+pub fn mat_t_mat_mult<
     const LDIM: usize,
     const NDIM: usize,
     const MDIM: usize,
@@ -300,7 +300,7 @@ pub(crate) fn mat_t_mat_mult<
 /// the multiplication on the product,
 /// or it will zero out the product ahead of time
 /// depending on the run time flag.
-pub(crate) fn mat_mat_t_mult<
+pub fn mat_mat_t_mult<
     const LDIM: usize,
     const NDIM: usize,
     const MDIM: usize,
@@ -344,7 +344,7 @@ pub(crate) fn mat_mat_t_mult<
 /// Non-transpose operation does:
 /// prod_matrix_il = rot_matrix_ij matrix_jk rot_matrix_lk
 /// prod_matrix = rot_matrix * matrix * rot_matrix^T
-pub(crate) fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
+pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
     rot_matrix: &[F],
     matrix: &[F],
     prod_matrix: &mut [F],

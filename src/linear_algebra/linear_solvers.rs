@@ -3,7 +3,7 @@ use log::error;
 
 /// Our solver errors that can be passed up the chain
 #[derive(Clone, PartialEq)]
-pub(crate) enum SolverError {
+pub enum SolverError {
     /// A small pivot aka a row nominally full of zeros caused the solver to fail
     SmallPivot,
     /// The solver did not fail and was successful
@@ -22,7 +22,7 @@ pub(crate) enum SolverError {
 /// 
 /// # Outputs:
 /// A solver error which tells us why the linear solver failed
-pub(crate) fn lup_decompose<const NDIM: usize, F>(
+pub fn lup_decompose<const NDIM: usize, F>(
     matrix: &mut [F],
     pivot: &mut [usize],
     tolerance: F,
@@ -93,7 +93,7 @@ where
 /// * `rhs` - the RHS of the system of equations we're solving for which has a size of NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
-pub(crate) fn lup_solve<const NDIM: usize, F>(
+pub fn lup_solve<const NDIM: usize, F>(
     solution: &mut [F],
     matrix: &[F],
     rhs: &[F],
@@ -131,7 +131,7 @@ pub(crate) fn lup_solve<const NDIM: usize, F>(
 /// * `matrix` - the A matrix up above which has a size of NDIM * NDIM
 /// * `solution` - the x vector up above which has a size of NDIM
 /// * `rhs` - the b vector up above which has a size of NDIM
-pub(crate) fn lup_solver<const NDIM: usize, F>(
+pub fn lup_solver<const NDIM: usize, F>(
     matrix: &mut [F],
     solution: &mut [F],
     rhs: &[F],

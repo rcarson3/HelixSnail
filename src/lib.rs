@@ -5,5 +5,10 @@
 extern crate num_traits as libnum;
 extern crate log;
 
-pub(crate) mod linear_algebra;
 pub mod nonlinear_solver;
+
+#[cfg(not(feature = "linear_algebra"))]
+pub(crate) mod linear_algebra;
+
+#[cfg(feature = "linear_algebra")]
+pub mod linear_algebra;
