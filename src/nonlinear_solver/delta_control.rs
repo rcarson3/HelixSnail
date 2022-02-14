@@ -1,6 +1,6 @@
+use anyhow::Result;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::info;
-use anyhow::Result;
 
 use crate::linear_algebra::norm;
 
@@ -17,7 +17,7 @@ where
     /// * `delta` - the acceptable step size
     /// * `norm_full` - the l2 norm of a full step size of the solution
     /// * `took_full` - whether or not a full solution step size was taken
-    fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool;
+    fn decrease_delta(&self, norm_full: F, took_full: bool, delta: &mut F) -> bool;
     /// Increases the acceptable step size
     ///
     /// # Arguments
@@ -37,14 +37,14 @@ where
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
-        delta: &mut F,
-        reject: &mut bool,
-        rho: &mut F,
         res: F,
         res0: F,
         pred_resid: F,
         took_full: bool,
         norm_full: F,
+        delta: &mut F,
+        reject: &mut bool,
+        rho: &mut F,
     ) -> bool;
 }
 
@@ -163,7 +163,7 @@ where
         reject_previous: &mut bool,
     ) -> Result<bool, crate::helix_error::Error> {
         if !resid_jacob_success {
-            let delta_success = self.decrease_delta(delta, newton_raphson_norm, use_newton_raphson);
+            let delta_success = self.decrease_delta(newton_raphson_norm, use_newton_raphson, delta);
             if !delta_success {
                 return Err(crate::helix_error::Error::DeltaFailure);
             }
@@ -184,14 +184,14 @@ where
 
         {
             let delta_success = self.update_delta(
-                delta,
-                reject_previous,
-                rho_last,
                 *l2_error,
                 l2_error_0,
                 predicted_residual,
                 use_newton_raphson,
                 newton_raphson_norm,
+                delta,
+                reject_previous,
+                rho_last,
             );
             if !delta_success {
                 return Err(crate::helix_error::Error::DeltaFailure);
@@ -208,7 +208,7 @@ where
     fn get_delta_initial(&self) -> F {
         self.delta_init
     }
-    fn decrease_delta(&self, delta: &mut F, norm_full: F, took_full: bool) -> bool {
+    fn decrease_delta(&self, norm_full: F, took_full: bool, delta: &mut F) -> bool {
         if took_full {
             *delta = Float::sqrt((*delta) * norm_full * self.xi_decr_delta * self.xi_decr_delta);
         } else {
@@ -230,14 +230,14 @@ where
     #[allow(clippy::too_many_arguments)]
     fn update_delta(
         &self,
-        delta: &mut F,
-        reject: &mut bool,
-        rho: &mut F,
         res: F,
         res0: F,
         pred_resid: F,
         took_full: bool,
         norm_full: F,
+        delta: &mut F,
+        reject: &mut bool,
+        rho: &mut F,
     ) -> bool {
         let actual_change = res - res0;
         let pred_change = pred_resid - res0;
@@ -255,7 +255,7 @@ where
                     self.increase_delta(delta);
                 }
             } else if (*rho < self.xi_lo) && (*rho > self.xi_uo) {
-                success = self.decrease_delta(delta, norm_full, took_full);
+                success = self.decrease_delta(norm_full, took_full, delta);
             }
         }
         *reject = false;

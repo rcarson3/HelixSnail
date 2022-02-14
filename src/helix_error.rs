@@ -5,7 +5,6 @@ mod private {
     pub enum Private {}
 }
 
-
 /// The error type used by this library.
 /// This can encapsulate our nonlinear solver and linear solver errors,
 /// and whatever else we might come up with in the future.
@@ -33,8 +32,7 @@ pub enum Error {
     __NonExhaustive(private::Private),
 }
 
-impl Debug for Error
-{
+impl Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::AlgorithmFailure => write!(f, "Nonlinear solver status algorithm failure"),
@@ -43,9 +41,14 @@ impl Debug for Error
             Error::InitialEvalFailure => write!(f, "Nonlinear solver status initial eval failure"),
             Error::SlowConvergence => write!(f, "Nonlinear solver status slow convergence"),
             Error::SlowJacobian => write!(f, "Nonlinear solver status slow jacobian status"),
-            Error::UnconvergedMaxIter => write!(f, "Nonlinear solver status unconverged max iterations"),
+            Error::UnconvergedMaxIter => {
+                write!(f, "Nonlinear solver status unconverged max iterations")
+            }
             Error::Unset => write!(f, "Nonlinear solver status unset"),
-            Error::SmallPivot => write!(f, "Linear solver was not able to pivot due to an entire row being almost 0"),
+            Error::SmallPivot => write!(
+                f,
+                "Linear solver was not able to pivot due to an entire row being almost 0"
+            ),
             Error::__NonExhaustive(_) => unreachable!(),
         }
     }

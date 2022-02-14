@@ -4,8 +4,8 @@
 use crate::linear_algebra::{dot_prod, lup_solver, mat_t_vec_mult, mat_vec_mult, norm};
 use crate::nonlinear_solver::*;
 
-use log::info;
 use anyhow::Result;
+use log::info;
 
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
@@ -84,11 +84,16 @@ where
     }
 
     /// Computes the newton step for a given iteration
-    fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F]) -> Result<(), crate::helix_error::Error>
+    fn compute_newton_step(
+        &self,
+        residual: &[F],
+        jacobian: &mut [F],
+        newton_step: &mut [F],
+    ) -> Result<(), crate::helix_error::Error>
     where
         [(); NP::NDIM + 1]:,
     {
-        lup_solver::<{ NP::NDIM }, F>(jacobian, newton_step, residual)?;
+        lup_solver::<{ NP::NDIM }, F>(residual, jacobian, newton_step)?;
         for i in 0..NP::NDIM {
             newton_step[i] *= -F::one();
         }
@@ -179,7 +184,7 @@ where
                 let mut temp = [F::zero(); NP::NDIM];
                 mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
                 jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
-                self.compute_newton_step(&mut jacobian, &mut newton_raphson_step, &residual)?;
+                self.compute_newton_step(&residual, &mut jacobian, &mut newton_raphson_step)?;
             }
 
             let mut predicted_residual = -F::one();
@@ -205,7 +210,7 @@ where
             {
                 let resid_jacob_success =
                     self.compute_residual_jacobian(&mut residual, &mut jacobian);
-                 let converged = self.delta_control.update::<{ NP::NDIM }>(
+                let converged = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
                     predicted_residual,
@@ -256,6 +261,6 @@ where
     }
     fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
         self.crj
-            .compute_resid_jacobian(fcn_eval, Some(jacobian), &self.x)
+            .compute_resid_jacobian(&self.x, fcn_eval, Some(jacobian))
     }
 }

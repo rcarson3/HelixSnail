@@ -87,9 +87,9 @@ where
     ///                   as we don't make use of finite difference methods to estimate the jacobian.
     fn compute_resid_jacobian(
         &mut self,
+        x: &[F],
         fcn_eval: &mut [F],
         opt_jacobian: Option<&mut [F]>,
-        x: &[F],
     ) -> bool;
     /// Dimension of the nonlinear system of equations
     const NDIM: usize;

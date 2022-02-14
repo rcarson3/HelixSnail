@@ -1,6 +1,6 @@
+use anyhow::Result;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::error;
-use anyhow::Result;
 
 /// Decomposes our matrix into a partially pivoted LU decomposition, we supply a tolerance
 /// for which the pivot is allowed to fail due to a row being nominally all zeros.
@@ -14,9 +14,9 @@ use anyhow::Result;
 /// # Outputs:
 /// A solver error which tells us why the linear solver failed
 pub fn lup_decompose<const NDIM: usize, F>(
+    tolerance: F,
     matrix: &mut [F],
     pivot: &mut [usize],
-    tolerance: F,
 ) -> Result<(), crate::helix_error::Error>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
@@ -84,7 +84,7 @@ where
 /// * `rhs` - the RHS of the system of equations we're solving for which has a size of NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
-pub fn lup_solve<const NDIM: usize, F>(solution: &mut [F], matrix: &[F], rhs: &[F], pivot: &[usize])
+pub fn lup_solve<const NDIM: usize, F>(matrix: &[F], rhs: &[F], pivot: &[usize], solution: &mut [F])
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -119,9 +119,9 @@ where
 /// * `solution` - the x vector up above which has a size of NDIM
 /// * `rhs` - the b vector up above which has a size of NDIM
 pub fn lup_solver<const NDIM: usize, F>(
+    rhs: &[F],
     matrix: &mut [F],
     solution: &mut [F],
-    rhs: &[F],
 ) -> Result<(), crate::helix_error::Error>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
@@ -134,10 +134,10 @@ where
     let mut pivot = [0; NDIM + 1];
     let tolerance: F = F::from(1e-50).unwrap();
 
-    lup_decompose::<{ NDIM }, F>(matrix, &mut pivot, tolerance)?;
+    lup_decompose::<{ NDIM }, F>(tolerance, matrix, &mut pivot)?;
 
     // Don't worry about pivoting matrix back to original form as we don't use LU in rest of code
-    lup_solve::<{ NDIM }, F>(solution, matrix, rhs, &pivot);
+    lup_solve::<{ NDIM }, F>(matrix, rhs, &pivot, solution);
 
     Ok(())
 }

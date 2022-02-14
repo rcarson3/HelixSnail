@@ -46,7 +46,7 @@ The below example is taken from the test suit, but it shows how to define your n
  F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
  {
  const NDIM: usize = 8;
- fn compute_resid_jacobian(&mut self, fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>, x: &[F]) -> bool {
+ fn compute_resid_jacobian(&mut self, x: &[F], fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>) -> bool {
      assert!(fcn_eval.len() >= Self::NDIM);
      assert!(x.len() >= Self::NDIM);
 
