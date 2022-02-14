@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 num-traits = {version = "0.2.14", features = ["libm"]}
 log = {version = "0.4.14", default-features = false}
+anyhow = {version="1.0.53", default-features=false}
 
 [features]
 linear_algebra = []

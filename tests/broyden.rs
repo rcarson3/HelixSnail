@@ -6,11 +6,11 @@ extern crate num_traits as libnum;
 
 use helix_snail::nonlinear_solver::*;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
-use log::info;
+use log::{info, error};
 // Making use of past here makes it slightly nicer to write the necessary test macro
 use paste::paste;
 
-const LOGGING_LEVEL: i32 = 0;
+const LOGGING_LEVEL: i32 = 1;
 
 /**
   Comment as in the Trilinos NOX package:
@@ -140,10 +140,18 @@ macro_rules! broyden_tr_dogleg_tests {
                     solver.set_logging_level(Some(LOGGING_LEVEL));
                     solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
 
-                    let status = solver.solve();
+                    let err = solver.solve();
+
+                    let status = match err {
+                        Ok(()) => true,
+                        Err(e) => {
+                            error!("Solution did not converge with following error {:?}", e);
+                            false
+                        }
+                    };
 
                     assert!(
-                        status == NonlinearSolverStatus::Converged,
+                        status == true,
                         "Solution did not converge"
                     );
                 }

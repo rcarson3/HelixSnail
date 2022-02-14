@@ -1,14 +1,6 @@
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::error;
-
-/// Our solver errors that can be passed up the chain
-#[derive(Clone, PartialEq)]
-pub enum SolverError {
-    /// A small pivot aka a row nominally full of zeros caused the solver to fail
-    SmallPivot,
-    /// The solver did not fail and was successful
-    NoError,
-}
+use anyhow::Result;
 
 /// Decomposes our matrix into a partially pivoted LU decomposition, we supply a tolerance
 /// for which the pivot is allowed to fail due to a row being nominally all zeros.
@@ -25,7 +17,7 @@ pub fn lup_decompose<const NDIM: usize, F>(
     matrix: &mut [F],
     pivot: &mut [usize],
     tolerance: F,
-) -> SolverError
+) -> Result<(), crate::helix_error::Error>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -52,7 +44,7 @@ where
                 "Pivot too small (pivot: {:?} < tolerance: {:?})",
                 max_a, tolerance
             );
-            return SolverError::SmallPivot;
+            return Err(crate::helix_error::Error::SmallPivot);
         }
 
         if imax != i {
@@ -80,7 +72,7 @@ where
         }
     }
 
-    SolverError::NoError
+    Ok(())
 }
 
 /// This performs the solve of the system given a factorized A matrix in the form of P L U
@@ -130,7 +122,7 @@ pub fn lup_solver<const NDIM: usize, F>(
     matrix: &mut [F],
     solution: &mut [F],
     rhs: &[F],
-) -> SolverError
+) -> Result<(), crate::helix_error::Error>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     [(); NDIM + 1]:,
@@ -142,12 +134,10 @@ where
     let mut pivot = [0; NDIM + 1];
     let tolerance: F = F::from(1e-50).unwrap();
 
-    let error = lup_decompose::<{ NDIM }, F>(matrix, &mut pivot, tolerance);
+    lup_decompose::<{ NDIM }, F>(matrix, &mut pivot, tolerance)?;
 
-    if error != SolverError::SmallPivot {
-        // Don't worry about pivoting matrix back to original form as we don't use LU in rest of code
-        lup_solve::<{ NDIM }, F>(solution, matrix, rhs, &pivot);
-    }
+    // Don't worry about pivoting matrix back to original form as we don't use LU in rest of code
+    lup_solve::<{ NDIM }, F>(solution, matrix, rhs, &pivot);
 
-    return error;
+    Ok(())
 }

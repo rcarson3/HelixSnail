@@ -11,31 +11,6 @@ pub use self::tr_dogleg_solver::*;
 
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
-/// Status of nonlinear solvers - status can range from converged, failure, and unconverged.
-#[derive(Clone, PartialEq)]
-pub enum NonlinearSolverStatus {
-    /// Solution has converged
-    Converged,
-    /// Initial evaluation of nonlinear problem compute_resid_jacobian failed
-    InitialEvalFailure,
-    /// Evaluation of nonlinear problem compute_resid_jacobian failed
-    EvalFailure,
-    /// Solution is not converged
-    Unconverged,
-    /// Failure within delta calculation
-    DeltaFailure,
-    /// Reached max number of iterations and still not converged
-    UnconvergedMaxIter,
-    /// Jacobian calculations are not adequately leading to solution to converge
-    SlowJacobian,
-    /// Solution is not making sufficient convergence progress
-    SlowConvergence,
-    /// Algorithm failed
-    AlgorithmFailure,
-    /// Values were unset
-    Unset,
-}
-
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
 pub trait NonlinearSolver<F>
@@ -60,7 +35,7 @@ where
     ///
     /// # Outputs
     /// * Nonlinear solver status which can be used to probe the success of the solve
-    fn solve(&mut self) -> NonlinearSolverStatus;
+    fn solve(&mut self) -> Result<(), crate::helix_error::Error>;
     /// Get the number of function evals of the system
     ///
     /// # Outputs

@@ -5,6 +5,7 @@ use crate::linear_algebra::{dot_prod, lup_solver, mat_t_vec_mult, mat_vec_mult, 
 use crate::nonlinear_solver::*;
 
 use log::info;
+use anyhow::Result;
 
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
@@ -37,8 +38,8 @@ where
     rho_last: F,
     /// The structure that can calculate the residual / func evaluation and the jacobian of the residual
     crj: &'a mut NP,
-    /// The status of our nonlinear solve
-    status: NonlinearSolverStatus,
+    /// The converged status of our nonlinear solve
+    converged: bool,
     /// The logging level where any level below 1 is considered off
     logging_level: i32,
 }
@@ -77,20 +78,21 @@ where
             delta: F::from(1e8).unwrap(),
             rho_last: F::one(),
             crj: crj,
-            status: NonlinearSolverStatus::Unconverged,
+            converged: false,
             logging_level: 0,
         }
     }
 
     /// Computes the newton step for a given iteration
-    fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F])
+    fn compute_newton_step(&self, jacobian: &mut [F], newton_step: &mut [F], residual: &[F]) -> Result<(), crate::helix_error::Error>
     where
         [(); NP::NDIM + 1]:,
     {
-        lup_solver::<{ NP::NDIM }, F>(jacobian, newton_step, residual);
+        lup_solver::<{ NP::NDIM }, F>(jacobian, newton_step, residual)?;
         for i in 0..NP::NDIM {
             newton_step[i] *= -F::one();
         }
+        Ok(())
     }
 
     /// Rejects the current iterations solution and returns the solution to its previous value
@@ -113,7 +115,7 @@ where
 {
     const NDIM: usize = NP::NDIM;
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
-        self.status = NonlinearSolverStatus::Unconverged;
+        self.converged = false;
         self.function_evals = 0;
         self.max_iterations = max_iter;
         self.solution_tolerance = tolerance;
@@ -131,8 +133,8 @@ where
             0
         };
     }
-    fn solve(&mut self) -> NonlinearSolverStatus {
-        self.status = NonlinearSolverStatus::Unconverged;
+    fn solve(&mut self) -> Result<(), crate::helix_error::Error> {
+        self.converged = false;
         self.num_iterations = 0;
         self.function_evals = 0;
         self.jacobian_evals = 0;
@@ -147,8 +149,7 @@ where
         let mut jacobian = [F::zero(); NP::NDIM * NP::NDIM];
 
         if !self.compute_residual_jacobian(&mut residual, &mut jacobian) {
-            self.status = NonlinearSolverStatus::InitialEvalFailure;
-            return self.status.clone();
+            return Err(crate::helix_error::Error::InitialEvalFailure);
         }
 
         self.l2_error = norm::<{ NP::NDIM }, F>(&residual);
@@ -178,7 +179,7 @@ where
                 let mut temp = [F::zero(); NP::NDIM];
                 mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
                 jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
-                self.compute_newton_step(&mut jacobian, &mut newton_raphson_step, &residual);
+                self.compute_newton_step(&mut jacobian, &mut newton_raphson_step, &residual)?;
             }
 
             let mut predicted_residual = -F::one();
@@ -204,7 +205,7 @@ where
             {
                 let resid_jacob_success =
                     self.compute_residual_jacobian(&mut residual, &mut jacobian);
-                self.status = self.delta_control.update::<{ NP::NDIM }>(
+                 let converged = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
                     predicted_residual,
@@ -217,9 +218,9 @@ where
                     &mut self.rho_last,
                     &mut self.l2_error,
                     &mut reject_previous,
-                );
-
-                if self.status != NonlinearSolverStatus::Unconverged {
+                )?;
+                if converged {
+                    self.converged = converged;
                     break;
                 }
             }
@@ -236,29 +237,10 @@ where
             l2_error_0 = self.l2_error;
         }
 
-        if self.num_iterations >= self.max_iterations {
-            self.status = NonlinearSolverStatus::UnconvergedMaxIter;
+        if !self.converged {
+            return Err(crate::helix_error::Error::UnconvergedMaxIter);
         }
-
-        if self.logging_level > 0 {
-            match self.status {
-                NonlinearSolverStatus::AlgorithmFailure => info!("Solver status algorithm failure"),
-                NonlinearSolverStatus::Converged => info!("Solver status converged"),
-                NonlinearSolverStatus::DeltaFailure => info!("Solver status delta failure"),
-                NonlinearSolverStatus::EvalFailure => info!("Solver status eval failure"),
-                NonlinearSolverStatus::InitialEvalFailure => {
-                    info!("Solver status initial eval failure")
-                }
-                NonlinearSolverStatus::SlowConvergence => info!("Solver status slow convergence"),
-                NonlinearSolverStatus::SlowJacobian => info!("Solver status slow jacobian status"),
-                NonlinearSolverStatus::Unconverged => info!("Solver status unconverged"),
-                NonlinearSolverStatus::UnconvergedMaxIter => {
-                    info!("Solver status unconverged max iterations")
-                }
-                NonlinearSolverStatus::Unset => info!("Solver status unset"),
-            }
-        }
-        self.status.clone()
+        Ok(())
     }
     fn get_num_fcn_evals(&self) -> usize {
         self.num_iterations

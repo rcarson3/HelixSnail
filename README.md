@@ -26,7 +26,7 @@ The below example is taken from the test suit, but it shows how to define your n
 
  use helix_snail::nonlinear_solver::*;
  use libnum::{Float, NumAssignOps, NumOps, One, Zero};
- use log::info;
+ use log::{info, error};
  // This doesn't need to be a global value.
  // I just had it for testing purposes.
  // A value less than or equal to 0 does not log anything
@@ -107,7 +107,7 @@ The below example is taken from the test suit, but it shows how to define your n
      let _ = env_logger::builder().is_test(true).try_init();
 
      let mut broyden = Broyden::<f64> {
-         lambda: $lambda,
+         lambda: 0.9999,
          logging_level: LOGGING_LEVEL,
      };
 
@@ -123,12 +123,20 @@ The below example is taken from the test suit, but it shows how to define your n
      }
 
      solver.set_logging_level(Some(LOGGING_LEVEL));
-     solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
+     solver.setup_options(Broyden::<f64>::NDIM * 10, 1e-12, Some(LOGGING_LEVEL));
 
-     let status = solver.solve();
+     let err = solver.solve();
+
+     let status = match err {
+         Ok(()) => true,
+         Err(e) => {
+             error!("Solution did not converge with following error {:?}", e);
+             false
+         }
+     };
 
      assert!(
-         status == NonlinearSolverStatus::Converged,
+         status == true,
          "Solution did not converge"
      );
  }

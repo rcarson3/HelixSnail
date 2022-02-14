@@ -1,8 +1,8 @@
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::info;
+use anyhow::Result;
 
 use crate::linear_algebra::norm;
-use crate::nonlinear_solver::NonlinearSolverStatus;
 
 /// The DeltaControl trait is used to define what an acceptable step size is in our solution step size
 pub trait DeltaControl<F>
@@ -161,11 +161,11 @@ where
         rho_last: &mut F,
         l2_error: &mut F,
         reject_previous: &mut bool,
-    ) -> NonlinearSolverStatus {
+    ) -> Result<bool, crate::helix_error::Error> {
         if !resid_jacob_success {
             let delta_success = self.decrease_delta(delta, newton_raphson_norm, use_newton_raphson);
             if !delta_success {
-                return NonlinearSolverStatus::DeltaFailure;
+                return Err(crate::helix_error::Error::DeltaFailure);
             }
             *reject_previous = false;
         } else {
@@ -179,7 +179,7 @@ where
             if logging_level > 0 {
                 info!("Solution converged");
             }
-            return NonlinearSolverStatus::Converged;
+            return Ok(true);
         }
 
         {
@@ -194,10 +194,10 @@ where
                 newton_raphson_norm,
             );
             if !delta_success {
-                return NonlinearSolverStatus::DeltaFailure;
+                return Err(crate::helix_error::Error::DeltaFailure);
             }
         }
-        NonlinearSolverStatus::Unconverged
+        Ok(false)
     }
 }
 
