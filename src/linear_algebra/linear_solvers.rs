@@ -132,7 +132,7 @@ where
     assert!(matrix.len() >= NDIM * NDIM);
 
     let mut pivot = [0; NDIM + 1];
-    let tolerance: F = F::from(1e-50).unwrap();
+    let tolerance: F = F::from(1e-35).unwrap();
 
     lup_decompose::<{ NDIM }, F>(tolerance, matrix, &mut pivot)?;
 
