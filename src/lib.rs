@@ -7,6 +7,7 @@ extern crate anyhow;
 extern crate log;
 extern crate num_traits as libnum;
 
+/// Contains the basic error types for our solvers whether they're either from our nonlinear or linear solvers.
 pub mod helix_error;
 /// Contains our various nonlinear solvers and functionality related to these solvers such as the traits
 /// necessary to define our nonlinear problem that can be used within the solvers.

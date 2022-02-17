@@ -1,7 +1,17 @@
 [package]
 name = "helix_snail"
 version = "0.1.0"
+authors = ["rcarson3 <rac428@cornell.edu>"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
 edition = "2021"
+
+repository = "https://github.com/rcarson3/HelixSnail"
+
+description = "A nonlinear solver library for small system sizes and meant for no-std environments."
+
+keywords = ["nonlinear-solver", "trust-region", "dogleg", ""]
+categories = ["algorithms",  "no-std", "mathematics",]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -16,3 +26,8 @@ linear_algebra = []
 [dev-dependencies]
 env_logger = {version = "0.9.0", default-features = false}
 paste = {version = "1.0.6"}
+
+[package.metadata.docs.rs]
+# To build locally use
+#   RUSTDOCFLAGS="--html-in-header katex-header.html" cargo doc --no-deps --document-private-items --open
+rustdoc-args = ["--html-in-header", "katex-header.html"]

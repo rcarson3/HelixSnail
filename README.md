@@ -142,6 +142,35 @@ The below example is taken from the test suit, but it shows how to define your n
  }
  ```
 
+# Basic overview
+
+The basic goal of the project is to solve a nonlinear system of equations. For example, let's say we're solving some nonlinear ODE using a simple backward Eulerian approach. Then our update procedure would look something like:
+
+```math
+\mathbf{x}^{t + 1} = \mathbf{x}^t + \Delta \mathbf{x}^{t + 1} =  \mathbf{x}^t + \Delta t * \dot{\mathbf{x}}^{t + 1}
+```
+
+In our update procedure, we want the difference between $\Delta \mathbf{x}^{t + 1}$ and $\Delta t * \dot{\mathbf{x}}^{t + 1}$ to be 0. We can rephrase this to say that the residual we're driving to zero is:
+
+```math
+\mathbf{r}^{t + 1} =  \Delta \mathbf{x}^{t + 1} - \Delta t * \dot{\mathbf{x}}^{t + 1} = \mathbf{0}
+```
+
+A number of techniques exist to solve such system of equations and for our solvers we make use of Newton-like methods which requires the Jacobian of the system which is defined as:
+
+```math
+\mathbf{J} = \frac{\partial \mathbf{r}}{\partial \Delta \mathbf{x}} \coloneqq
+\def\arraystretch{1.5}
+\begin{pmatrix}
+\frac{\partial r_1}{\partial x_1} & \cdots & \frac{\partial r_1}{\partial x_n} \\
+\frac{\partial r_2}{\partial x_1} & \cdots & \frac{\partial r_2}{\partial x_n} \\
+\vdots & \ddots & \vdots \\
+\frac{\partial r_m}{\partial x_1} & \cdots & \frac{\partial r_m}{\partial x_n}
+\end{pmatrix}.
+```
+
+If we were looking at a simple Newton-Raphson (NR) type scheme then the update in $\Delta \mathbf{x}$ is $\Delta \mathbf{x}^{i+1} = \Delta \mathbf{x}^{i} - \mathbf{J}^{-1}\mathbf{r}$. We continue this process until the $|| \mathbf{r} ||_{L2}$ is small compared to our $\Delta \mathbf{x}$. The NR method has a theoretical quadratic convergence to the solution. However in practice, we often times find that not to be the case which is why one might resort to different nonlinear solvers such as the ones in this crate.
+
  # License
 
  This crate is licensed under the MIT license.
