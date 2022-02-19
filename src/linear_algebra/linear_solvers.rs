@@ -21,11 +21,11 @@ pub fn lup_decompose<const NDIM: usize, F>(
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(pivot.len() >= NDIM + 1);
+    assert!(pivot.len() > NDIM);
     assert!(matrix.len() >= NDIM * NDIM);
 
-    for i in 0..=NDIM {
-        pivot[i] = i;
+    for (i, item) in pivot.iter_mut().enumerate().take(NDIM + 1) {
+        *item = i;
     }
 
     for i in 0..NDIM {
@@ -48,15 +48,11 @@ where
         }
 
         if imax != i {
-            let tmp = pivot[i];
             // Pivot contains what original row is in the current pivot[index] row
-            pivot[i] = pivot[imax];
-            pivot[imax] = tmp;
+            pivot.swap(i, imax);
             // Swap the rows
             for j in 0..NDIM {
-                let tmp = matrix[i * NDIM + j];
-                matrix[i * NDIM + j] = matrix[imax * NDIM + j];
-                matrix[imax * NDIM + j] = tmp;
+                matrix.swap(i * NDIM + j, imax * NDIM + j)
             }
 
             pivot[NDIM] += 1;
@@ -88,7 +84,7 @@ pub fn lup_solve<const NDIM: usize, F>(matrix: &[F], rhs: &[F], pivot: &[usize],
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(pivot.len() >= NDIM + 1);
+    assert!(pivot.len() > NDIM);
     assert!(solution.len() >= NDIM);
     assert!(rhs.len() >= NDIM);
     assert!(matrix.len() >= NDIM * NDIM);
@@ -105,7 +101,7 @@ where
         for k in (i + 1)..NDIM {
             solution[i] -= matrix[i * NDIM + k] * solution[k];
         }
-        solution[i] = solution[i] / matrix[i * NDIM + i];
+        solution[i] /= matrix[i * NDIM + i];
     }
 }
 

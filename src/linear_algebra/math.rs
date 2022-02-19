@@ -51,8 +51,8 @@ where
     }
 
     // Calculate the norm for each column
-    for i_m in 0..MDIM {
-        norm_vec[i_m] = F::sqrt(norm_vec[i_m]);
+    for item in norm_vec.iter_mut().take(MDIM) {
+        *item = F::sqrt(*item);
     }
 }
 
@@ -231,8 +231,8 @@ pub fn mat_mat_mult<
     assert!(prod_matrix.len() >= LDIM * MDIM);
 
     if ZERO_OUT {
-        for i_lm in 0..(LDIM * MDIM) {
-            prod_matrix[i_lm] = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
+            *item = F::zero();
         }
     }
 
@@ -273,8 +273,8 @@ pub fn mat_t_mat_mult<
     assert!(prod_matrix.len() >= LDIM * MDIM);
 
     if ZERO_OUT {
-        for i_lm in 0..(LDIM * MDIM) {
-            prod_matrix[i_lm] = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
+            *item = F::zero();
         }
     }
 
@@ -315,8 +315,8 @@ pub fn mat_mat_t_mult<
     assert!(prod_matrix.len() >= LDIM * MDIM);
 
     if ZERO_OUT {
-        for i_lm in 0..(LDIM * MDIM) {
-            prod_matrix[i_lm] = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
+            *item = F::zero();
         }
     }
 
@@ -353,8 +353,8 @@ pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
     assert!(prod_matrix.len() >= NDIM * NDIM);
 
     // zero things out first
-    for i_nn in 0..(NDIM * NDIM) {
-        prod_matrix[i_nn] = F::zero();
+    for item in prod_matrix.iter_mut().take(NDIM * NDIM) {
+        *item = F::zero();
     }
 
     // Now for matrix multiplication

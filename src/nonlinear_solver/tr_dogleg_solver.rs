@@ -68,7 +68,7 @@ where
     ) -> TrustRegionDoglegSolver<'a, F, NP> {
         TrustRegionDoglegSolver::<'a, F, NP> {
             x: [F::zero(); NP::NDIM],
-            delta_control: delta_control,
+            delta_control,
             function_evals: 0,
             jacobian_evals: 0,
             num_iterations: 0,
@@ -77,7 +77,7 @@ where
             l2_error: -F::one(),
             delta: F::from(1e8).unwrap(),
             rho_last: F::one(),
-            crj: crj,
+            crj,
             converged: false,
             logging_level: 0,
         }
@@ -94,8 +94,8 @@ where
         [(); NP::NDIM + 1]:,
     {
         lup_solver::<{ NP::NDIM }, F>(residual, jacobian, newton_step)?;
-        for i in 0..NP::NDIM {
-            newton_step[i] *= -F::one();
+        for item in newton_step.iter_mut().take(NP::NDIM) {
+            *item *= -F::one();
         }
         Ok(())
     }
@@ -104,8 +104,8 @@ where
     fn reject(&mut self, delta_x: &[F]) {
         assert!(delta_x.len() >= NP::NDIM);
 
-        for i_x in 0..NP::NDIM {
-            self.x[i_x] -= delta_x[i_x];
+        for (i_x, item) in delta_x.iter().enumerate().take(NP::NDIM) {
+            self.x[i_x] -= *item;
         }
     }
 }
