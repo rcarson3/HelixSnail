@@ -87,7 +87,7 @@ where
     fn compute_newton_step(
         &self,
         residual: &[F],
-        jacobian: &mut [F],
+        jacobian: &mut [[F; NP::NDIM]],
         newton_step: &mut [F],
     ) -> Result<(), crate::helix_error::Error>
     where
@@ -115,7 +115,7 @@ where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
     [(); NP::NDIM]:,
-    [(); NP::NDIM * NP::NDIM]:,
+    [[(); NP::NDIM]; NP::NDIM]:,
     [(); NP::NDIM + 1]:,
 {
     const NDIM: usize = NP::NDIM;
@@ -151,9 +151,9 @@ where
         }
 
         let mut residual = [F::zero(); NP::NDIM];
-        let mut jacobian = [F::zero(); NP::NDIM * NP::NDIM];
+        let mut jacobian = [[F::zero(); NP::NDIM]; NP::NDIM];
 
-        if !self.compute_residual_jacobian(&mut residual, &mut jacobian) {
+        if !self.compute_residual_jacobian::<{NP::NDIM}>(&mut residual, &mut jacobian) {
             return Err(crate::helix_error::Error::InitialEvalFailure);
         }
 
@@ -209,7 +209,7 @@ where
 
             {
                 let resid_jacob_success =
-                    self.compute_residual_jacobian(&mut residual, &mut jacobian);
+                    self.compute_residual_jacobian::<{NP::NDIM}>(&mut residual, &mut jacobian);
                 let converged = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
@@ -259,8 +259,9 @@ where
     fn get_l2_error(&self) -> F {
         self.l2_error
     }
-    fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool {
+    fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool {
+        assert!(NP::NDIM == NDIM, "Self::NDIM/NP::NDIM and const NDIMs are not equal...");
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, Some(jacobian))
+            .compute_resid_jacobian::<{NDIM}>(&self.x, fcn_eval, Some(jacobian))
     }
 }

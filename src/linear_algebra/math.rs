@@ -32,21 +32,21 @@ where
 /// Takes the norm of the columns of a matrix
 /// where the matrix has dimensions NDIM x MDIM
 /// The values are stored in norm_vec which is of length m
-pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(matrix: &[F], norm_vec: &mut [F])
+pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(matrix: &[[F; MDIM]], norm_vec: &mut [F])
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(norm_vec.len() >= MDIM);
     // Initialize this to have the squared values of the first row
     for i_m in 0..MDIM {
-        norm_vec[i_m] = matrix[i_m] * matrix[i_m];
+        norm_vec[i_m] = matrix[0][i_m] * matrix[0][i_m];
     }
 
     // Accumulate the results across all remaining rows
     for i_n in 1..NDIM {
         for j_m in 0..MDIM {
-            norm_vec[j_m] += matrix[i_n * MDIM + j_m] * matrix[i_n * MDIM + j_m];
+            norm_vec[j_m] += matrix[i_n][j_m] * matrix[i_n][j_m];
         }
     }
 
@@ -62,17 +62,17 @@ where
 /// vec1 has length NDIM
 /// vec2 has length MDIM
 /// matrix has dimensions NDIM x MDIM
-pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(vec1: &[F], vec2: &[F], matrix: &mut [F])
+pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(vec1: &[F], vec2: &[F], matrix: &mut [[F; MDIM]])
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec1.len() >= MDIM);
     assert!(vec2.len() >= NDIM);
 
     for i_n in 0..NDIM {
         for j_m in 0..MDIM {
-            matrix[i_n * MDIM + j_m] = vec1[i_n] * vec2[j_m];
+            matrix[i_n][j_m] = vec1[i_n] * vec2[j_m];
         }
     }
 }
@@ -87,11 +87,11 @@ pub fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
     vec1: &[F],
     vec2: &[F],
     scale: Option<F>,
-    matrix: &mut [F],
+    matrix: &mut [[F; MDIM]],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec1.len() >= MDIM);
     assert!(vec2.len() >= NDIM);
 
@@ -99,7 +99,7 @@ pub fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
 
     for i_n in 0..NDIM {
         for j_m in 0..MDIM {
-            matrix[i_n * MDIM + j_m] += alpha * vec1[i_n] * vec2[j_m];
+            matrix[i_n][j_m] += alpha * vec1[i_n] * vec2[j_m];
         }
     }
 }
@@ -109,19 +109,19 @@ pub fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
 /// vec has dimensions MDIM
 /// prod has dimensions NDIM
 pub fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
-    matrix: &[F],
+    matrix: &[[F; MDIM]],
     vec: &[F],
     prod: &mut [F],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= MDIM);
     assert!(prod.len() >= NDIM);
     for i_n in 0..NDIM {
         prod[i_n] = F::zero();
         for j_m in 0..MDIM {
-            prod[i_n] += matrix[i_n * MDIM + j_m] * vec[j_m];
+            prod[i_n] += matrix[i_n][j_m] * vec[j_m];
         }
     }
 }
@@ -131,20 +131,20 @@ pub fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// vec has dimensions NDIM
 /// prod has dimensions MDIM
 pub fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
-    matrix: &[F],
+    matrix: &[[F; MDIM]],
     vec: &[F],
     prod: &mut [F],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= NDIM);
     assert!(prod.len() >= MDIM);
 
     for i_m in 0..MDIM {
         prod[i_m] = F::zero();
         for j_n in 0..NDIM {
-            prod[i_m] += matrix[j_n * NDIM + i_m] * vec[j_n];
+            prod[i_m] += matrix[j_n][i_m] * vec[j_n];
         }
     }
 }
@@ -157,21 +157,21 @@ pub fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// prod has dimensions NDIM
 /// NDIM <= MDIM
 pub fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
-    matrix: &[F],
+    matrix: &[[F; MDIM]],
     vec: &[F],
     prod: &mut [F],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(NDIM <= MDIM);
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= MDIM);
     assert!(prod.len() >= NDIM);
 
     for i_n in 0..NDIM {
         prod[i_n] = F::zero();
         for j_m in i_n..MDIM {
-            prod[i_n] += matrix[i_n * MDIM + j_m] * vec[j_m];
+            prod[i_n] += matrix[i_n][j_m] * vec[j_m];
         }
     }
 }
@@ -184,14 +184,14 @@ pub fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
 /// prod has dimensions NDIM
 /// NDIM <= MDIM
 pub fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
-    matrix: &[F],
+    matrix: &[[F; MDIM]],
     vec: &[F],
     prod: &mut [F],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(NDIM <= MDIM);
-    assert!(matrix.len() >= MDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= MDIM);
     assert!(prod.len() >= NDIM);
 
@@ -200,7 +200,7 @@ pub fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
         // M_ji * a_j = p_i
         // Only go down to diagonal
         for j_m in 0..i_n {
-            prod[i_n] += matrix[j_m * MDIM + i_n] * vec[j_m];
+            prod[i_n] += matrix[j_m][i_n] * vec[j_m];
         }
     }
 }
@@ -220,19 +220,21 @@ pub fn mat_mat_mult<
     const ZERO_OUT: bool,
     F,
 >(
-    matrix1: &[F],
-    matrix2: &[F],
-    prod_matrix: &mut [F],
+    matrix1: &[[F; NDIM]],
+    matrix2: &[[F; MDIM]],
+    prod_matrix: &mut [[F; MDIM]],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix1.len() >= LDIM * NDIM);
-    assert!(matrix2.len() >= NDIM * MDIM);
-    assert!(prod_matrix.len() >= LDIM * MDIM);
+    assert!(matrix1.len() >= LDIM);
+    assert!(matrix2.len() >= NDIM);
+    assert!(prod_matrix.len() >= LDIM);
 
     if ZERO_OUT {
-        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
-            *item = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM) {
+            for val in item.iter_mut() {
+                *val = F::zero();
+            }
         }
     }
 
@@ -240,8 +242,8 @@ pub fn mat_mat_mult<
     for i_l in 0..LDIM {
         for j_n in 0..NDIM {
             for k_m in 0..MDIM {
-                prod_matrix[i_l * MDIM + k_m] +=
-                    matrix1[i_l * NDIM + j_n] * matrix2[j_n * MDIM + k_m];
+                prod_matrix[i_l][k_m] +=
+                    matrix1[i_l][j_n] * matrix2[j_n][k_m];
             }
         }
     }
@@ -262,19 +264,21 @@ pub fn mat_t_mat_mult<
     const ZERO_OUT: bool,
     F,
 >(
-    matrix1: &[F],
-    matrix2: &[F],
-    prod_matrix: &mut [F],
+    matrix1: &[[F; LDIM]],
+    matrix2: &[[F; MDIM]],
+    prod_matrix: &mut [[F; MDIM]],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix1.len() >= LDIM * NDIM);
-    assert!(matrix2.len() >= NDIM * MDIM);
-    assert!(prod_matrix.len() >= LDIM * MDIM);
+    assert!(matrix1.len() >= NDIM);
+    assert!(matrix2.len() >= NDIM);
+    assert!(prod_matrix.len() >= LDIM);
 
     if ZERO_OUT {
-        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
-            *item = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM) {
+            for val in item.iter_mut() {
+                *val = F::zero();
+            }
         }
     }
 
@@ -282,8 +286,8 @@ pub fn mat_t_mat_mult<
     for j_n in 0..NDIM {
         for i_l in 0..LDIM {
             for k_m in 0..MDIM {
-                prod_matrix[i_l * MDIM + k_m] +=
-                    matrix1[j_n * LDIM + i_l] * matrix2[j_n * MDIM + k_m];
+                prod_matrix[i_l][k_m] +=
+                    matrix1[j_n][i_l] * matrix2[j_n][k_m];
             }
         }
     }
@@ -304,19 +308,21 @@ pub fn mat_mat_t_mult<
     const ZERO_OUT: bool,
     F,
 >(
-    matrix1: &[F],
-    matrix2: &[F],
-    prod_matrix: &mut [F],
+    matrix1: &[[F; NDIM]],
+    matrix2: &[[F; NDIM]],
+    prod_matrix: &mut [[F; MDIM]],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(matrix1.len() >= LDIM * NDIM);
-    assert!(matrix2.len() >= NDIM * MDIM);
-    assert!(prod_matrix.len() >= LDIM * MDIM);
+    assert!(matrix1.len() >= LDIM);
+    assert!(matrix2.len() >= MDIM);
+    assert!(prod_matrix.len() >= LDIM);
 
     if ZERO_OUT {
-        for item in prod_matrix.iter_mut().take(LDIM * MDIM) {
-            *item = F::zero();
+        for item in prod_matrix.iter_mut().take(LDIM) {
+            for val in item.iter_mut() {
+                *val = F::zero();
+            }
         }
     }
 
@@ -324,8 +330,8 @@ pub fn mat_mat_t_mult<
     for i_l in 0..LDIM {
         for k_m in 0..MDIM {
             for j_n in 0..NDIM {
-                prod_matrix[i_l * MDIM + k_m] +=
-                    matrix1[i_l * NDIM + j_n] * matrix2[k_m * NDIM + j_n];
+                prod_matrix[i_l][k_m] +=
+                    matrix1[i_l][j_n] * matrix2[k_m][j_n];
             }
         }
     }
@@ -342,19 +348,21 @@ pub fn mat_mat_t_mult<
 /// prod_matrix_il = rot_matrix_ij matrix_jk rot_matrix_lk
 /// prod_matrix = rot_matrix * matrix * rot_matrix^T
 pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
-    rot_matrix: &[F],
-    matrix: &[F],
-    prod_matrix: &mut [F],
+    rot_matrix: &[[F; NDIM]],
+    matrix: &[[F; NDIM]],
+    prod_matrix: &mut [[F; NDIM]],
 ) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    assert!(rot_matrix.len() >= NDIM * NDIM);
-    assert!(matrix.len() >= NDIM * NDIM);
-    assert!(prod_matrix.len() >= NDIM * NDIM);
+    assert!(rot_matrix.len() >= NDIM);
+    assert!(matrix.len() >= NDIM);
+    assert!(prod_matrix.len() >= NDIM);
 
     // zero things out first
-    for item in prod_matrix.iter_mut().take(NDIM * NDIM) {
-        *item = F::zero();
+    for item in prod_matrix.iter_mut().take(NDIM) {
+        for val in item.iter_mut() {
+            *val = F::zero();
+        }
     }
 
     // Now for matrix multiplication
@@ -364,14 +372,14 @@ pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
                 for l_n in 0..NDIM {
                     if TRANSPOSE {
                         // This is rot_matrix_ji matrix_jk rot_matrix_kl
-                        prod_matrix[i_n * NDIM + l_n] += rot_matrix[j_n * NDIM + i_n]
-                            * matrix[j_n * NDIM + k_n]
-                            * rot_matrix[k_n * NDIM + l_n];
+                        prod_matrix[i_n][l_n] += rot_matrix[j_n][i_n]
+                            * matrix[j_n][k_n]
+                            * rot_matrix[k_n][l_n];
                     } else {
                         // This is rot_matrix_ij matrix_jk rot_matrix_lk
-                        prod_matrix[i_n * NDIM + l_n] += rot_matrix[i_n * NDIM + j_n]
-                            * matrix[j_n * NDIM + k_n]
-                            * rot_matrix[l_n * NDIM + k_n];
+                        prod_matrix[i_n][l_n] += rot_matrix[i_n][j_n]
+                            * matrix[j_n][k_n]
+                            * rot_matrix[l_n][k_n];
                     }
                 }
             }

@@ -67,7 +67,9 @@ where
     ///
     /// # Outputs
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
-    fn compute_residual_jacobian(&mut self, fcn_eval: &mut [F], jacobian: &mut [F]) -> bool;
+    /// Note that nightly currently isn't flexible enough for us to have this be jacobian: &mut [[F; Self::NDIM]]
+    /// so we revert to this instead... where NDIM = Self::NDIM in practice
+    fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool;
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
@@ -75,6 +77,9 @@ pub trait NonlinearProblem<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
+    /// Dimension of the nonlinear system of equations
+    const NDIM: usize;
+
     /// This function at a minimum computes the residual / function evaluation of the system of nonlinear equations
     /// that we are solving for. It is expected that fcn_eval and opt_jacobian have been scaled such that the solution
     /// variable x nominally remains in the neighborhood of [-1, 1] as this provides better numerical stability of
@@ -85,12 +90,12 @@ where
     /// * opt_jacobian - (Optional) the derivative of the residual with respect to the solution variable: size NDIM * NDIM
     ///                   For the solvers within this library, it is expected that jacobian is provided back to us if we pass in a slice
     ///                   as we don't make use of finite difference methods to estimate the jacobian.
-    fn compute_resid_jacobian(
+    /// Note that nightly currently isn't flexible enough for us to have this be jacobian: Option(&mut [[F; Self::NDIM]])
+    /// so we revert to this instead... where NDIM = Self::NDIM in practice
+    fn compute_resid_jacobian<const NDIM: usize>(
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: Option<&mut [F]>,
+        opt_jacobian: Option<&mut [[F; NDIM]]>,
     ) -> bool;
-    /// Dimension of the nonlinear system of equations
-    const NDIM: usize;
 }

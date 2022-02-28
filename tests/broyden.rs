@@ -43,12 +43,13 @@ where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     const NDIM: usize = 8;
-    fn compute_resid_jacobian(
+    fn compute_resid_jacobian<const NDIM: usize>(
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: Option<&mut [F]>,
+        opt_jacobian: Option<&mut [[F; NDIM]]>,
     ) -> bool {
+        assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
         assert!(fcn_eval.len() >= Self::NDIM);
         assert!(x.len() >= Self::NDIM);
 
@@ -75,29 +76,32 @@ where
 
         if let Some(jacobian) = opt_jacobian {
             assert!(
-                jacobian.len() >= Self::NDIM * Self::NDIM,
+                jacobian.len() >= Self::NDIM,
                 "length {:?}",
                 jacobian.len()
             );
 
-            for ij in 0..(Self::NDIM * Self::NDIM) {
-                jacobian[ij] = F::zero();
+            // zero things out first
+            for item in jacobian.iter_mut().take(NDIM) {
+                for val in item.iter_mut() {
+                    *val = F::zero();
+                }
             }
 
-            jacobian[0 * Self::NDIM + 0] = three - four * x[0];
-            jacobian[0 * Self::NDIM + 1] = -two;
+            jacobian[0][0] = three - four * x[0];
+            jacobian[0][1] = -two;
             // F(i) = (3-2*x[i])*x[i] - x[i-1] - 2*x[i+1] + 1;
             for i in 1..(Self::NDIM - 1) {
-                jacobian[i * Self::NDIM + i - 1] = -F::one();
-                jacobian[i * Self::NDIM + i] = three - four * x[i];
-                jacobian[i * Self::NDIM + i + 1] = -two;
+                jacobian[i][i - 1] = -F::one();
+                jacobian[i][i] = three - four * x[i];
+                jacobian[i][i + 1] = -two;
             }
 
             let dfndxn = three - four * x[Self::NDIM - 1];
             // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
-            jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 1)] =
+            jacobian[(Self::NDIM - 1)][(Self::NDIM - 1)] =
                 (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
-            jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 2)] =
+            jacobian[(Self::NDIM - 1)][(Self::NDIM - 2)] =
                 (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn;
         }
 

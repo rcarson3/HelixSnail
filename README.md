@@ -41,67 +41,76 @@ The below example is taken from the test suit, but it shows how to define your n
  pub logging_level: i32,
  }
 
- impl<F> NonlinearProblem<F> for Broyden<F>
- where
- F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
- {
- const NDIM: usize = 8;
- fn compute_resid_jacobian(&mut self, x: &[F], fcn_eval: &mut [F], opt_jacobian: Option<&mut [F]>) -> bool {
-     assert!(fcn_eval.len() >= Self::NDIM);
-     assert!(x.len() >= Self::NDIM);
+impl<F> NonlinearProblem<F> for Broyden<F>
+where
+    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+{
+    const NDIM: usize = 8;
+    fn compute_resid_jacobian<const NDIM: usize>(
+        &mut self,
+        x: &[F],
+        fcn_eval: &mut [F],
+        opt_jacobian: Option<&mut [[F; NDIM]]>,
+    ) -> bool {
+        assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
+        assert!(fcn_eval.len() >= Self::NDIM);
+        assert!(x.len() >= Self::NDIM);
 
-     let two: F = F::from(2.0).unwrap();
-     let three: F = F::from(3.0).unwrap();
-     let four: F = F::from(4.0).unwrap();
+        let two: F = F::from(2.0).unwrap();
+        let three: F = F::from(3.0).unwrap();
+        let four: F = F::from(4.0).unwrap();
 
-     if self.logging_level > 0 {
-         info!("Evaluating at x = ");
-         for i in 0..Self::NDIM {
-             info!(" {:?} ", x[i]);
-         }
-     }
+        if self.logging_level > 0 {
+            info!("Evaluating at x = ");
+            for i in 0..Self::NDIM {
+                info!(" {:?} ", x[i]);
+            }
+        }
 
-     fcn_eval[0] = (three - two * x[0]) * x[0] - two * x[1] + F::one();
-     for i in 1..(Self::NDIM - 1) {
-         fcn_eval[i] = (three - two * x[i]) * x[i] - x[i - 1] - two * x[i + 1] + F::one();
-     }
+        fcn_eval[0] = (three - two * x[0]) * x[0] - two * x[1] + F::one();
+        for i in 1..(Self::NDIM - 1) {
+            fcn_eval[i] = (three - two * x[i]) * x[i] - x[i - 1] - two * x[i + 1] + F::one();
+        }
 
-     let fcn =
-         (three - two * x[Self::NDIM - 1]) * x[Self::NDIM - 1] - x[Self::NDIM - 2] + F::one();
+        let fcn =
+            (three - two * x[Self::NDIM - 1]) * x[Self::NDIM - 1] - x[Self::NDIM - 2] + F::one();
 
-     fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
+        fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
-     if let Some(jacobian) = opt_jacobian {
-         assert!(
-             jacobian.len() >= Self::NDIM * Self::NDIM,
-             "length {:?}",
-             jacobian.len()
-         );
+        if let Some(jacobian) = opt_jacobian {
+            assert!(
+                jacobian.len() >= Self::NDIM,
+                "length {:?}",
+                jacobian.len()
+            );
 
-         for ij in 0..(Self::NDIM * Self::NDIM) {
-             jacobian[ij] = F::zero();
-         }
+            // zero things out first
+            for item in jacobian.iter_mut().take(NDIM) {
+                for val in item.iter_mut() {
+                    *val = F::zero();
+                }
+            }
 
-         jacobian[0 * Self::NDIM + 0] = three - four * x[0];
-         jacobian[0 * Self::NDIM + 1] = -two;
-         // F(i) = (3-2*x[i])*x[i] - x[i-1] - 2*x[i+1] + 1;
-         for i in 1..(Self::NDIM - 1) {
-             jacobian[i * Self::NDIM + i - 1] = -F::one();
-             jacobian[i * Self::NDIM + i] = three - four * x[i];
-             jacobian[i * Self::NDIM + i + 1] = -two;
-         }
+            jacobian[0][0] = three - four * x[0];
+            jacobian[0][1] = -two;
+            // F(i) = (3-2*x[i])*x[i] - x[i-1] - 2*x[i+1] + 1;
+            for i in 1..(Self::NDIM - 1) {
+                jacobian[i][i - 1] = -F::one();
+                jacobian[i][i] = three - four * x[i];
+                jacobian[i][i + 1] = -two;
+            }
 
-         let dfndxn = three - four * x[Self::NDIM - 1];
-         // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
-         jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 1)] =
-             (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
-         jacobian[(Self::NDIM - 1) * Self::NDIM + (Self::NDIM - 2)] =
-             (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn; 
-     }
+            let dfndxn = three - four * x[Self::NDIM - 1];
+            // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
+            jacobian[(Self::NDIM - 1)][(Self::NDIM - 1)] =
+                (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
+            jacobian[(Self::NDIM - 1)][(Self::NDIM - 2)] =
+                (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn;
+        }
 
-     true
- }
- }
+        true
+    }
+}
 
  fn main() {
      let _ = env_logger::builder().is_test(true).try_init();

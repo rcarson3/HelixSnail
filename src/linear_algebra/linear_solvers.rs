@@ -15,14 +15,14 @@ use log::error;
 /// A solver error which tells us why the linear solver failed
 pub fn lup_decompose<const NDIM: usize, F>(
     tolerance: F,
-    matrix: &mut [F],
+    matrix: &mut [[F; NDIM]],
     pivot: &mut [usize],
 ) -> Result<(), crate::helix_error::Error>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() > NDIM);
-    assert!(matrix.len() >= NDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
 
     for (i, item) in pivot.iter_mut().enumerate().take(NDIM + 1) {
         *item = i;
@@ -32,7 +32,7 @@ where
         let mut imax = i;
         let mut max_a = F::zero();
         for j in i..NDIM {
-            let abs_a = F::abs(matrix[j * NDIM + i]);
+            let abs_a = F::abs(matrix[j][i]);
             if abs_a > max_a {
                 max_a = abs_a;
                 imax = j;
@@ -51,19 +51,20 @@ where
             // Pivot contains what original row is in the current pivot[index] row
             pivot.swap(i, imax);
             // Swap the rows
-            for j in 0..NDIM {
-                matrix.swap(i * NDIM + j, imax * NDIM + j)
-            }
+            matrix.swap(i, imax);
+            // for j in 0..NDIM {
+            //     matrix.swap(i * NDIM + j, imax * NDIM + j)
+            // }
 
             pivot[NDIM] += 1;
         }
 
         for j in (i + 1)..NDIM {
             // matrix_ji /= matrix_ii
-            matrix[j * NDIM + i] /= matrix[i * NDIM + i];
+            matrix[j][i] /= matrix[i][i];
             for k in (i + 1)..NDIM {
                 // matrix_jk -= matrix_ji * matrix_ik
-                matrix[j * NDIM + k] -= matrix[j * NDIM + i] * matrix[i * NDIM + k];
+                matrix[j][k] -= matrix[j][i] * matrix[i][k];
             }
         }
     }
@@ -80,28 +81,28 @@ where
 /// * `rhs` - the RHS of the system of equations we're solving for which has a size of NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
-pub fn lup_solve<const NDIM: usize, F>(matrix: &[F], rhs: &[F], pivot: &[usize], solution: &mut [F])
+pub fn lup_solve<const NDIM: usize, F>(matrix: &[[F; NDIM]], rhs: &[F], pivot: &[usize], solution: &mut [F])
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() > NDIM);
     assert!(solution.len() >= NDIM);
     assert!(rhs.len() >= NDIM);
-    assert!(matrix.len() >= NDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
 
     for i in 0..NDIM {
         solution[i] = rhs[pivot[i]];
         for k in 0..i {
             // solution_i -= matrix_ik * x_k
-            solution[i] -= matrix[i * NDIM + k] * solution[k];
+            solution[i] -= matrix[i][k] * solution[k];
         }
     }
 
     for i in (0..NDIM).rev() {
         for k in (i + 1)..NDIM {
-            solution[i] -= matrix[i * NDIM + k] * solution[k];
+            solution[i] -= matrix[i][k] * solution[k];
         }
-        solution[i] /= matrix[i * NDIM + i];
+        solution[i] /= matrix[i][i];
     }
 }
 
@@ -116,7 +117,7 @@ where
 /// * `rhs` - the b vector up above which has a size of NDIM
 pub fn lup_solver<const NDIM: usize, F>(
     rhs: &[F],
-    matrix: &mut [F],
+    matrix: &mut [[F; NDIM]],
     solution: &mut [F],
 ) -> Result<(), crate::helix_error::Error>
 where
@@ -125,7 +126,7 @@ where
 {
     assert!(solution.len() >= NDIM);
     assert!(rhs.len() >= NDIM);
-    assert!(matrix.len() >= NDIM * NDIM);
+    assert!(matrix.len() >= NDIM);
 
     let mut pivot = [0; NDIM + 1];
     let tolerance: F = F::from(1e-35).unwrap();
