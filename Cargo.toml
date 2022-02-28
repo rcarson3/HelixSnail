@@ -26,11 +26,11 @@ linear_algebra = []
 [dev-dependencies]
 env_logger = {version = "0.9.0", default-features = false}
 paste = {version = "1.0.6"}
-criterion = "0.3.4"
-
-[[bench]]
-name = "solver_bench"
-harness = false
+# Only use this for bench tests as this takes up way too much time to compile
+# criterion = {version="0.3.4"}
+# [[bench]]
+# name = "solver_bench"
+# harness = false
 
 [package.metadata.docs.rs]
 # To build locally use
