@@ -31,6 +31,13 @@ paste = {version = "1.0.6"}
 # [[bench]]
 # name = "solver_bench"
 # harness = false
+# These options are what provides the best performance
+# [profile.bench]
+# opt-level = 3
+# debug = false
+# lto = 'thin'
+# codegen-units = 1
+# incremental = false
 
 [package.metadata.docs.rs]
 # To build locally use

@@ -207,7 +207,6 @@ fn math_wrapper(c: &mut Criterion) {
 
     let mut vec1: [f64; NDIM] = [0.0; NDIM];
     let mut vec2: [f64; NDIM] = [0.0; NDIM];
-    let mut matrix: [f64; NDIM * NDIM] = [0.0; NDIM * NDIM];
     let mut matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
 
     for i in 0..NDIM {
