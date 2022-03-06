@@ -50,7 +50,7 @@ where
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
     ) -> bool {
         assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
         assert!(fcn_eval.len() >= Self::NDIM);

@@ -96,6 +96,6 @@ where
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
     ) -> bool;
 }

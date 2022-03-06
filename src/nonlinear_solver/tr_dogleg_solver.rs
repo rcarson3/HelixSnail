@@ -262,6 +262,6 @@ where
     fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool {
         assert!(NP::NDIM == NDIM, "Self::NDIM/NP::NDIM and const NDIMs are not equal...");
         self.crj
-            .compute_resid_jacobian::<{NDIM}>(&self.x, fcn_eval, Some(jacobian))
+            .compute_resid_jacobian::<{NDIM}>(&self.x, fcn_eval, &mut Some(jacobian))
     }
 }
