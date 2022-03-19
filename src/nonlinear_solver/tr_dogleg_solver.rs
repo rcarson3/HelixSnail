@@ -10,10 +10,10 @@ use log::info;
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
 /// when a given step is near the solution.
-pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
+pub struct TrustRegionDoglegSolver<'a, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: Sized,
+    NP: NonlinearProblem<F> + Sized,
     [F; NP::NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
@@ -48,7 +48,7 @@ where
 impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearProblem<F> + Sized,
     [F; NP::NDIM]: Sized,
 {
     /// The size of the jacobian
@@ -114,7 +114,7 @@ where
 impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearProblem<F> + Sized,
     [F; NP::NDIM]: Sized,
     [[F; NP::NDIM]; NP::NDIM]: Sized,
     [F; NP::NDIM + 1]: Sized,
