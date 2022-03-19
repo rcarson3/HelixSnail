@@ -13,7 +13,8 @@ use log::info;
 pub struct TrustRegionDoglegSolver<'a, F, NP: NonlinearProblem<F>>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    [(); NP::NDIM]:,
+    NP: Sized,
+    [F; NP::NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
@@ -48,7 +49,7 @@ impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
-    [(); NP::NDIM]:,
+    [F; NP::NDIM]: Sized,
 {
     /// The size of the jacobian
     const NDIM2: usize = NP::NDIM * NP::NDIM;
@@ -91,7 +92,7 @@ where
         newton_step: &mut [F],
     ) -> Result<(), crate::helix_error::Error>
     where
-        [(); NP::NDIM + 1]:,
+        [F; NP::NDIM + 1]: Sized,
     {
         lup_solver::<{ NP::NDIM }, F>(residual, jacobian, newton_step)?;
         for item in newton_step.iter_mut().take(NP::NDIM) {
@@ -114,9 +115,9 @@ impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
-    [(); NP::NDIM]:,
-    [[(); NP::NDIM]; NP::NDIM]:,
-    [(); NP::NDIM + 1]:,
+    [F; NP::NDIM]: Sized,
+    [[F; NP::NDIM]; NP::NDIM]: Sized,
+    [F; NP::NDIM + 1]: Sized,
 {
     const NDIM: usize = NP::NDIM;
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
