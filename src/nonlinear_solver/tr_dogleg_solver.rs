@@ -66,8 +66,8 @@ where
     pub fn new(
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
-    ) -> TrustRegionDoglegSolver<'a, {NP_NDIM}, F, NP> {
-        TrustRegionDoglegSolver::<'a, {NP_NDIM}, F, NP> {
+    ) -> TrustRegionDoglegSolver<'a, { NP_NDIM }, F, NP> {
+        TrustRegionDoglegSolver::<'a, { NP_NDIM }, F, NP> {
             x: [F::zero(); NP_NDIM],
             delta_control,
             function_evals: 0,
@@ -119,7 +119,8 @@ where
     }
 }
 
-impl<'a, const NP_NDIM: usize, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, {NP_NDIM}, F, NP>
+impl<'a, const NP_NDIM: usize, F, NP> NonlinearSolver<F>
+    for TrustRegionDoglegSolver<'a, { NP_NDIM }, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
@@ -162,7 +163,7 @@ where
         let mut residual = [F::zero(); NP_NDIM];
         let mut jacobian = [[F::zero(); NP_NDIM]; NP_NDIM];
 
-        if !self.compute_residual_jacobian::<{NP_NDIM}>(&mut residual, &mut jacobian) {
+        if !self.compute_residual_jacobian::<{ NP_NDIM }>(&mut residual, &mut jacobian) {
             return Err(crate::helix_error::Error::InitialEvalFailure);
         }
 
@@ -185,11 +186,7 @@ where
             self.num_iterations += 1;
 
             if !reject_previous {
-                mat_t_vec_mult::<{ NP_NDIM }, { NP_NDIM }, F>(
-                    &jacobian,
-                    &residual,
-                    &mut gradient,
-                );
+                mat_t_vec_mult::<{ NP_NDIM }, { NP_NDIM }, F>(&jacobian, &residual, &mut gradient);
                 let mut temp = [F::zero(); NP_NDIM];
                 mat_vec_mult::<{ NP_NDIM }, { NP_NDIM }, F>(&jacobian, &gradient, &mut temp);
                 jacob_grad_2 = dot_prod::<{ NP_NDIM }, F>(&temp, &temp);
@@ -218,7 +215,7 @@ where
 
             {
                 let resid_jacob_success =
-                    self.compute_residual_jacobian::<{NP_NDIM}>(&mut residual, &mut jacobian);
+                    self.compute_residual_jacobian::<{ NP_NDIM }>(&mut residual, &mut jacobian);
                 let converged = self.delta_control.update::<{ NP_NDIM }>(
                     &residual,
                     l2_error_0,
@@ -268,9 +265,16 @@ where
     fn get_l2_error(&self) -> F {
         self.l2_error
     }
-    fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool {
-        assert!(NP_NDIM == NDIM, "Self::NDIM/NP_NDIM and const NDIMs are not equal...");
+    fn compute_residual_jacobian<const NDIM: usize>(
+        &mut self,
+        fcn_eval: &mut [F],
+        jacobian: &mut [[F; NDIM]],
+    ) -> bool {
+        assert!(
+            NP_NDIM == NDIM,
+            "Self::NDIM/NP_NDIM and const NDIMs are not equal..."
+        );
         self.crj
-            .compute_resid_jacobian::<{NDIM}>(&self.x, fcn_eval, &mut Some(jacobian))
+            .compute_resid_jacobian::<{ NDIM }>(&self.x, fcn_eval, &mut Some(jacobian))
     }
 }

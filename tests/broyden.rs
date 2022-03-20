@@ -6,7 +6,7 @@ extern crate num_traits as libnum;
 
 use helix_snail::nonlinear_solver::*;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
-use log::{info, error};
+use log::{error, info};
 // Making use of past here makes it slightly nicer to write the necessary test macro
 use paste::paste;
 
@@ -49,7 +49,10 @@ where
         fcn_eval: &mut [F],
         opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
     ) -> bool {
-        assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
+        assert!(
+            Self::NDIM == NDIM,
+            "Self::NDIM and const NDIMs are not equal..."
+        );
         assert!(fcn_eval.len() >= Self::NDIM);
         assert!(x.len() >= Self::NDIM);
 
@@ -75,11 +78,7 @@ where
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
         if let Some(jacobian) = opt_jacobian {
-            assert!(
-                jacobian.len() >= Self::NDIM,
-                "length {:?}",
-                jacobian.len()
-            );
+            assert!(jacobian.len() >= Self::NDIM, "length {:?}", jacobian.len());
 
             // zero things out first
             for item in jacobian.iter_mut().take(NDIM) {
@@ -136,19 +135,19 @@ macro_rules! broyden_tr_dogleg_tests {
                     };
                     {
                         let mut solver = TrustRegionDoglegSolver::<{Broyden::<$type>::NDIM}, $type, Broyden<$type>>::new(&dc, &mut broyden);
-                        
+
                         {
                             let solx = solver.get_mut_x();
                             for i in 0..Broyden::<$type>::NDIM {
                                 solx[i] = 0.0;
                             }
                         }
-    
+
                         solver.set_logging_level(Some(LOGGING_LEVEL));
                         solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
-    
+
                         let err = solver.solve();
-    
+
                         let status = match err {
                             Ok(()) => true,
                             Err(e) => {
@@ -156,7 +155,7 @@ macro_rules! broyden_tr_dogleg_tests {
                                 false
                             }
                         };
-    
+
                         assert!(
                             status == true,
                             "Solution did not converge"

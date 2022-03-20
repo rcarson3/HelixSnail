@@ -32,8 +32,10 @@ where
 /// Takes the norm of the columns of a matrix
 /// where the matrix has dimensions NDIM x MDIM
 /// The values are stored in norm_vec which is of length m
-pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(matrix: &[[F; MDIM]], norm_vec: &mut [F])
-where
+pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(
+    matrix: &[[F; MDIM]],
+    norm_vec: &mut [F],
+) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(matrix.len() >= NDIM);
@@ -62,8 +64,11 @@ where
 /// vec1 has length NDIM
 /// vec2 has length MDIM
 /// matrix has dimensions NDIM x MDIM
-pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(vec1: &[F], vec2: &[F], matrix: &mut [[F; MDIM]])
-where
+pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
+    vec1: &[F],
+    vec2: &[F],
+    matrix: &mut [[F; MDIM]],
+) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(matrix.len() >= NDIM);
@@ -242,8 +247,7 @@ pub fn mat_mat_mult<
     for i_l in 0..LDIM {
         for j_n in 0..NDIM {
             for k_m in 0..MDIM {
-                prod_matrix[i_l][k_m] +=
-                    matrix1[i_l][j_n] * matrix2[j_n][k_m];
+                prod_matrix[i_l][k_m] += matrix1[i_l][j_n] * matrix2[j_n][k_m];
             }
         }
     }
@@ -286,8 +290,7 @@ pub fn mat_t_mat_mult<
     for j_n in 0..NDIM {
         for i_l in 0..LDIM {
             for k_m in 0..MDIM {
-                prod_matrix[i_l][k_m] +=
-                    matrix1[j_n][i_l] * matrix2[j_n][k_m];
+                prod_matrix[i_l][k_m] += matrix1[j_n][i_l] * matrix2[j_n][k_m];
             }
         }
     }
@@ -330,8 +333,7 @@ pub fn mat_mat_t_mult<
     for i_l in 0..LDIM {
         for k_m in 0..MDIM {
             for j_n in 0..NDIM {
-                prod_matrix[i_l][k_m] +=
-                    matrix1[i_l][j_n] * matrix2[k_m][j_n];
+                prod_matrix[i_l][k_m] += matrix1[i_l][j_n] * matrix2[k_m][j_n];
             }
         }
     }
@@ -372,14 +374,12 @@ pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
                 for l_n in 0..NDIM {
                     if TRANSPOSE {
                         // This is rot_matrix_ji matrix_jk rot_matrix_kl
-                        prod_matrix[i_n][l_n] += rot_matrix[j_n][i_n]
-                            * matrix[j_n][k_n]
-                            * rot_matrix[k_n][l_n];
+                        prod_matrix[i_n][l_n] +=
+                            rot_matrix[j_n][i_n] * matrix[j_n][k_n] * rot_matrix[k_n][l_n];
                     } else {
                         // This is rot_matrix_ij matrix_jk rot_matrix_lk
-                        prod_matrix[i_n][l_n] += rot_matrix[i_n][j_n]
-                            * matrix[j_n][k_n]
-                            * rot_matrix[l_n][k_n];
+                        prod_matrix[i_n][l_n] +=
+                            rot_matrix[i_n][j_n] * matrix[j_n][k_n] * rot_matrix[l_n][k_n];
                     }
                 }
             }

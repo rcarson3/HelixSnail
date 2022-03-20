@@ -81,8 +81,12 @@ where
 /// * `rhs` - the RHS of the system of equations we're solving for which has a size of NDIM
 /// * `pivot` - the array which contains the indices corresponding to which row now corresponds to the i-th
 ///    row in the current `matrix`.
-pub fn lup_solve<const NDIM: usize, F>(matrix: &[[F; NDIM]], rhs: &[F], pivot: &[usize], solution: &mut [F])
-where
+pub fn lup_solve<const NDIM: usize, F>(
+    matrix: &[[F; NDIM]],
+    rhs: &[F],
+    pivot: &[usize],
+    solution: &mut [F],
+) where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
     assert!(pivot.len() > NDIM);

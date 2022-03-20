@@ -69,7 +69,11 @@ where
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
     /// Note that nightly currently isn't flexible enough for us to have this be jacobian: &mut [[F; Self::NDIM]]
     /// so we revert to this instead... where NDIM = Self::NDIM in practice
-    fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool;
+    fn compute_residual_jacobian<const NDIM: usize>(
+        &mut self,
+        fcn_eval: &mut [F],
+        jacobian: &mut [[F; NDIM]],
+    ) -> bool;
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
