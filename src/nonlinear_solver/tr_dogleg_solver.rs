@@ -10,15 +10,15 @@ use log::info;
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
 /// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
 /// when a given step is near the solution.
-pub struct TrustRegionDoglegSolver<'a, F, NP>
+pub struct TrustRegionDoglegSolver<'a, const NP_NDIM: usize, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: NonlinearProblem<F> + Sized,
-    [F; NP::NDIM]: Sized,
+    NP: NonlinearProblem<F>,
+    // [F; NP_NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
-    pub x: [F; NP::NDIM],
+    x: [F; NP_NDIM],
     /// This controls the step size that our solver takes while iterating for a solution
     delta_control: &'a TrustRegionDeltaControl<F>,
     /// The total number of function evaluations our solver took
@@ -45,14 +45,14 @@ where
     logging_level: i32,
 }
 
-impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
+impl<'a, const NP_NDIM: usize, F, NP> TrustRegionDoglegSolver<'a, NP_NDIM, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: NonlinearProblem<F> + Sized,
-    [F; NP::NDIM]: Sized,
+    NP: NonlinearProblem<F>,
+    // [F; NP_NDIM]: Sized,
 {
     /// The size of the jacobian
-    const NDIM2: usize = NP::NDIM * NP::NDIM;
+    const NDIM2: usize = NP_NDIM * NP_NDIM;
 
     /// Creates a new solver with default values for a number of fields when provided the delta control
     /// and the nonlinear problem structure
@@ -66,14 +66,14 @@ where
     pub fn new(
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
-    ) -> TrustRegionDoglegSolver<'a, F, NP> {
-        TrustRegionDoglegSolver::<'a, F, NP> {
-            x: [F::zero(); NP::NDIM],
+    ) -> TrustRegionDoglegSolver<'a, {NP_NDIM}, F, NP> {
+        TrustRegionDoglegSolver::<'a, {NP_NDIM}, F, NP> {
+            x: [F::zero(); NP_NDIM],
             delta_control,
             function_evals: 0,
             jacobian_evals: 0,
             num_iterations: 0,
-            max_iterations: NP::NDIM * 1000,
+            max_iterations: NP_NDIM * 1000,
             solution_tolerance: F::from(1e-12).unwrap(),
             l2_error: -F::one(),
             delta: F::from(1e8).unwrap(),
@@ -88,14 +88,14 @@ where
     fn compute_newton_step(
         &self,
         residual: &[F],
-        jacobian: &mut [[F; NP::NDIM]],
+        jacobian: &mut [[F; NP_NDIM]],
         newton_step: &mut [F],
     ) -> Result<(), crate::helix_error::Error>
     where
-        [F; NP::NDIM + 1]: Sized,
+        [F; NP_NDIM + 1]: Sized,
     {
-        lup_solver::<{ NP::NDIM }, F>(residual, jacobian, newton_step)?;
-        for item in newton_step.iter_mut().take(NP::NDIM) {
+        lup_solver::<{ NP_NDIM }, F>(residual, jacobian, newton_step)?;
+        for item in newton_step.iter_mut().take(NP_NDIM) {
             *item *= -F::one();
         }
         Ok(())
@@ -103,23 +103,31 @@ where
 
     /// Rejects the current iterations solution and returns the solution to its previous value
     fn reject(&mut self, delta_x: &[F]) {
-        assert!(delta_x.len() >= NP::NDIM);
+        assert!(delta_x.len() >= NP_NDIM);
 
-        for (i_x, item) in delta_x.iter().enumerate().take(NP::NDIM) {
+        for (i_x, item) in delta_x.iter().enumerate().take(NP_NDIM) {
             self.x[i_x] -= *item;
         }
     }
+
+    pub fn get_mut_x(&mut self) -> &mut [F] {
+        &mut self.x
+    }
+
+    pub fn get_x(&self) -> &[F] {
+        &self.x
+    }
 }
 
-impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
+impl<'a, const NP_NDIM: usize, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, {NP_NDIM}, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-    NP: NonlinearProblem<F> + Sized,
-    [F; NP::NDIM]: Sized,
-    [[F; NP::NDIM]; NP::NDIM]: Sized,
-    [F; NP::NDIM + 1]: Sized,
+    NP: NonlinearProblem<F>,
+    // [F; NP_NDIM]: Sized,
+    // [[F; NP_NDIM]; NP_NDIM]: Sized,
+    [F; NP_NDIM + 1]: Sized,
 {
-    const NDIM: usize = NP::NDIM;
+    const NDIM: usize = NP_NDIM;
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
         self.converged = false;
         self.function_evals = 0;
@@ -151,14 +159,14 @@ where
             info!("Initial delta = {:?}", self.delta);
         }
 
-        let mut residual = [F::zero(); NP::NDIM];
-        let mut jacobian = [[F::zero(); NP::NDIM]; NP::NDIM];
+        let mut residual = [F::zero(); NP_NDIM];
+        let mut jacobian = [[F::zero(); NP_NDIM]; NP_NDIM];
 
-        if !self.compute_residual_jacobian::<{NP::NDIM}>(&mut residual, &mut jacobian) {
+        if !self.compute_residual_jacobian::<{NP_NDIM}>(&mut residual, &mut jacobian) {
             return Err(crate::helix_error::Error::InitialEvalFailure);
         }
 
-        self.l2_error = norm::<{ NP::NDIM }, F>(&residual);
+        self.l2_error = norm::<{ NP_NDIM }, F>(&residual);
 
         let mut l2_error_0 = self.l2_error;
 
@@ -168,32 +176,32 @@ where
 
         let mut reject_previous = false;
 
-        let mut newton_raphson_step = [F::zero(); NP::NDIM];
-        let mut gradient = [F::zero(); NP::NDIM];
-        let mut delta_x = [F::zero(); NP::NDIM];
+        let mut newton_raphson_step = [F::zero(); NP_NDIM];
+        let mut gradient = [F::zero(); NP_NDIM];
+        let mut delta_x = [F::zero(); NP_NDIM];
         let mut jacob_grad_2 = F::zero();
 
         while self.num_iterations < self.max_iterations {
             self.num_iterations += 1;
 
             if !reject_previous {
-                mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(
+                mat_t_vec_mult::<{ NP_NDIM }, { NP_NDIM }, F>(
                     &jacobian,
                     &residual,
                     &mut gradient,
                 );
-                let mut temp = [F::zero(); NP::NDIM];
-                mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
-                jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
+                let mut temp = [F::zero(); NP_NDIM];
+                mat_vec_mult::<{ NP_NDIM }, { NP_NDIM }, F>(&jacobian, &gradient, &mut temp);
+                jacob_grad_2 = dot_prod::<{ NP_NDIM }, F>(&temp, &temp);
                 self.compute_newton_step(&residual, &mut jacobian, &mut newton_raphson_step)?;
             }
 
             let mut predicted_residual = -F::one();
             let mut use_newton_raphson = false;
 
-            let newton_raphson_l2_norm = norm::<{ NP::NDIM }, F>(&newton_raphson_step);
+            let newton_raphson_l2_norm = norm::<{ NP_NDIM }, F>(&newton_raphson_step);
 
-            dogleg::<{ NP::NDIM }, F>(
+            dogleg::<{ NP_NDIM }, F>(
                 self.delta,
                 l2_error_0,
                 newton_raphson_l2_norm,
@@ -210,8 +218,8 @@ where
 
             {
                 let resid_jacob_success =
-                    self.compute_residual_jacobian::<{NP::NDIM}>(&mut residual, &mut jacobian);
-                let converged = self.delta_control.update::<{ NP::NDIM }>(
+                    self.compute_residual_jacobian::<{NP_NDIM}>(&mut residual, &mut jacobian);
+                let converged = self.delta_control.update::<{ NP_NDIM }>(
                     &residual,
                     l2_error_0,
                     predicted_residual,
@@ -261,7 +269,7 @@ where
         self.l2_error
     }
     fn compute_residual_jacobian<const NDIM: usize>(&mut self, fcn_eval: &mut [F], jacobian: &mut [[F; NDIM]]) -> bool {
-        assert!(NP::NDIM == NDIM, "Self::NDIM/NP::NDIM and const NDIMs are not equal...");
+        assert!(NP_NDIM == NDIM, "Self::NDIM/NP_NDIM and const NDIMs are not equal...");
         self.crj
             .compute_resid_jacobian::<{NDIM}>(&self.x, fcn_eval, &mut Some(jacobian))
     }

@@ -134,30 +134,34 @@ macro_rules! broyden_tr_dogleg_tests {
                         delta_init: 1.0,
                         ..Default::default()
                     };
-
-                    let mut solver = TrustRegionDoglegSolver::<$type, Broyden<$type>>::new(&dc, &mut broyden);
-
-                    for i in 0..Broyden::<$type>::NDIM {
-                        solver.x[i] = 0.0;
-                    }
-
-                    solver.set_logging_level(Some(LOGGING_LEVEL));
-                    solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
-
-                    let err = solver.solve();
-
-                    let status = match err {
-                        Ok(()) => true,
-                        Err(e) => {
-                            error!("Solution did not converge with following error {:?}", e);
-                            false
+                    {
+                        let mut solver = TrustRegionDoglegSolver::<{Broyden::<$type>::NDIM}, $type, Broyden<$type>>::new(&dc, &mut broyden);
+                        
+                        {
+                            let solx = solver.get_mut_x();
+                            for i in 0..Broyden::<$type>::NDIM {
+                                solx[i] = 0.0;
+                            }
                         }
-                    };
-
-                    assert!(
-                        status == true,
-                        "Solution did not converge"
-                    );
+    
+                        solver.set_logging_level(Some(LOGGING_LEVEL));
+                        solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
+    
+                        let err = solver.solve();
+    
+                        let status = match err {
+                            Ok(()) => true,
+                            Err(e) => {
+                                error!("Solution did not converge with following error {:?}", e);
+                                false
+                            }
+                        };
+    
+                        assert!(
+                            status == true,
+                            "Solution did not converge"
+                        );
+                    }
                 }
             }
         )*
