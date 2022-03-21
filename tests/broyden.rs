@@ -136,11 +136,8 @@ macro_rules! broyden_tr_dogleg_tests {
                     {
                         let mut solver = TrustRegionDoglegSolver::<{Broyden::<$type>::NDIM}, $type, Broyden<$type>>::new(&dc, &mut broyden);
 
-                        {
-                            let solx = solver.get_mut_x();
-                            for i in 0..Broyden::<$type>::NDIM {
-                                solx[i] = 0.0;
-                            }
+                        for i in 0..Broyden::<$type>::NDIM {
+                            solver.x[i] = 0.0;
                         }
 
                         solver.set_logging_level(Some(LOGGING_LEVEL));

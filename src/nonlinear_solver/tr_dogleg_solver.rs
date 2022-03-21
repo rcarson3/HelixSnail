@@ -14,11 +14,10 @@ pub struct TrustRegionDoglegSolver<'a, const NP_NDIM: usize, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
-    // [F; NP_NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
-    x: [F; NP_NDIM],
+    pub x: [F; NP_NDIM],
     /// This controls the step size that our solver takes while iterating for a solution
     delta_control: &'a TrustRegionDeltaControl<F>,
     /// The total number of function evaluations our solver took
@@ -49,7 +48,6 @@ impl<'a, const NP_NDIM: usize, F, NP> TrustRegionDoglegSolver<'a, NP_NDIM, F, NP
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
-    // [F; NP_NDIM]: Sized,
 {
     /// The size of the jacobian
     const NDIM2: usize = NP_NDIM * NP_NDIM;
@@ -109,23 +107,13 @@ where
             self.x[i_x] -= *item;
         }
     }
-
-    pub fn get_mut_x(&mut self) -> &mut [F] {
-        &mut self.x
-    }
-
-    pub fn get_x(&self) -> &[F] {
-        &self.x
-    }
 }
 
 impl<'a, const NP_NDIM: usize, F, NP> NonlinearSolver<F>
-    for TrustRegionDoglegSolver<'a, { NP_NDIM }, F, NP>
+    for TrustRegionDoglegSolver<'a, NP_NDIM, F, NP>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     NP: NonlinearProblem<F>,
-    // [F; NP_NDIM]: Sized,
-    // [[F; NP_NDIM]; NP_NDIM]: Sized,
     [F; NP_NDIM + 1]: Sized,
 {
     const NDIM: usize = NP_NDIM;

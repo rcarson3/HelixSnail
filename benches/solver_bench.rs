@@ -34,7 +34,7 @@ where
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
     ) -> bool {
         assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
         assert!(fcn_eval.len() >= Self::NDIM);
@@ -109,7 +109,7 @@ fn broyden_bench_f64() {
         ..Default::default()
     };
 
-    let mut solver = TrustRegionDoglegSolver::<f64, Broyden<f64>>::new(&dc, &mut broyden);
+    let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
 
     for i in 0..Broyden::<f64>::NDIM {
         solver.x[i] = 0.0;
@@ -147,7 +147,7 @@ fn broyden_bench_f32() {
         ..Default::default()
     };
 
-    let mut solver = TrustRegionDoglegSolver::<f32, Broyden<f32>>::new(&dc, &mut broyden);
+    let mut solver = TrustRegionDoglegSolver::<{Broyden::<f32>::NDIM}, f32, Broyden<f32>>::new(&dc, &mut broyden);
 
     for i in 0..Broyden::<f32>::NDIM {
         solver.x[i] = 0.0;

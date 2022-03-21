@@ -127,12 +127,9 @@ where
 
      let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
 
-    {
-        let solx = solver.get_mut_x();
-        for i in 0..Broyden::<f64>::NDIM {
-            solx[i] = 0.0;
-        }
-    }
+     for i in 0..Broyden::<f64>::NDIM {
+         solver.x[i] = 0.0;
+     }
 
      solver.set_logging_level(Some(LOGGING_LEVEL));
      solver.setup_options(Broyden::<f64>::NDIM * 10, 1e-12, Some(LOGGING_LEVEL));
