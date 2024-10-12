@@ -3,7 +3,6 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs, generic_arg_infer)]
 
-extern crate anyhow;
 extern crate log;
 extern crate num_traits as libnum;
 

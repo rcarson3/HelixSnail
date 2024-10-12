@@ -1,4 +1,4 @@
-use anyhow::Result;
+use core::result::Result;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::info;
 
@@ -161,11 +161,11 @@ where
         rho_last: &mut F,
         l2_error: &mut F,
         reject_previous: &mut bool,
-    ) -> Result<bool, crate::helix_error::Error> {
+    ) -> Result<bool, crate::helix_error::SolverError> {
         if !resid_jacob_success {
             let delta_success = self.decrease_delta(newton_raphson_norm, use_newton_raphson, delta);
             if !delta_success {
-                return Err(crate::helix_error::Error::DeltaFailure);
+                return Err(crate::helix_error::SolverError::DeltaFailure);
             }
             *reject_previous = false;
         } else {
@@ -194,7 +194,7 @@ where
                 rho_last,
             );
             if !delta_success {
-                return Err(crate::helix_error::Error::DeltaFailure);
+                return Err(crate::helix_error::SolverError::DeltaFailure);
             }
         }
         Ok(false)

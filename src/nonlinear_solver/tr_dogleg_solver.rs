@@ -4,7 +4,7 @@
 use crate::linear_algebra::{dot_prod, lup_solver, mat_t_vec_mult, mat_vec_mult, norm};
 use crate::nonlinear_solver::*;
 
-use anyhow::Result;
+use core::result::Result;
 use log::info;
 
 /// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
@@ -88,7 +88,7 @@ where
         residual: &[F],
         jacobian: &mut [[F; NP_NDIM]],
         newton_step: &mut [F],
-    ) -> Result<(), crate::helix_error::Error>
+    ) -> Result<(), crate::helix_error::SolverError>
     where
         [F; NP_NDIM + 1]: Sized,
     {
@@ -136,7 +136,7 @@ where
             0
         };
     }
-    fn solve(&mut self) -> Result<(), crate::helix_error::Error> {
+    fn solve(&mut self) -> Result<(), crate::helix_error::SolverError> {
         self.converged = false;
         self.num_iterations = 0;
         self.function_evals = 0;
@@ -152,7 +152,7 @@ where
         let mut jacobian = [[F::zero(); NP_NDIM]; NP_NDIM];
 
         if !self.compute_residual_jacobian::<{ NP_NDIM }>(&mut residual, &mut jacobian) {
-            return Err(crate::helix_error::Error::InitialEvalFailure);
+            return Err(crate::helix_error::SolverError::InitialEvalFailure);
         }
 
         self.l2_error = norm::<{ NP_NDIM }, F>(&residual);
@@ -237,7 +237,7 @@ where
         }
 
         if !self.converged {
-            return Err(crate::helix_error::Error::UnconvergedMaxIter);
+            return Err(crate::helix_error::SolverError::UnconvergedMaxIter);
         }
         Ok(())
     }

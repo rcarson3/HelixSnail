@@ -35,7 +35,7 @@ where
     ///
     /// # Outputs
     /// * Nonlinear solver status which can be used to probe the success of the solve
-    fn solve(&mut self) -> Result<(), crate::helix_error::Error>;
+    fn solve(&mut self) -> Result<(), crate::helix_error::SolverError>;
     /// Get the number of function evals of the system
     ///
     /// # Outputs

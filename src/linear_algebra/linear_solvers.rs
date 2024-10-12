@@ -1,4 +1,4 @@
-use anyhow::Result;
+use core::result::Result;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::error;
 
@@ -17,7 +17,7 @@ pub fn lup_decompose<const NDIM: usize, F>(
     tolerance: F,
     matrix: &mut [[F; NDIM]],
     pivot: &mut [usize],
-) -> Result<(), crate::helix_error::Error>
+) -> Result<(), crate::helix_error::SolverError>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
@@ -44,7 +44,7 @@ where
                 "Pivot too small (pivot: {:?} < tolerance: {:?})",
                 max_a, tolerance
             );
-            return Err(crate::helix_error::Error::SmallPivot);
+            return Err(crate::helix_error::SolverError::SmallPivot);
         }
 
         if imax != i {
@@ -123,7 +123,7 @@ pub fn lup_solver<const NDIM: usize, F>(
     rhs: &[F],
     matrix: &mut [[F; NDIM]],
     solution: &mut [F],
-) -> Result<(), crate::helix_error::Error>
+) -> Result<(), crate::helix_error::SolverError>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
     [F; NDIM + 1]: Sized,

@@ -18,26 +18,25 @@ categories = ["algorithms",  "no-std", "mathematics",]
 [dependencies]
 num-traits = {version = "0.2.14", features = ["libm"]}
 log = {version = "0.4.14", default-features = false}
-anyhow = {version="1.0.53", default-features=false}
 
 [features]
 linear_algebra = []
 
 [dev-dependencies]
-env_logger = {version = "0.9.0", default-features = false}
+env_logger = {version = "0.11.5", default-features = false}
 paste = {version = "1.0.6"}
 # Only use this for bench tests as this takes up way too much time to compile
-# criterion = {version="0.3.4"}
-# [[bench]]
-# name = "solver_bench"
-# harness = false
-# These options are what provides the best performance
-# [profile.bench]
-# opt-level = 3
-# debug = false
-# lto = 'thin'
-# codegen-units = 1
-# incremental = false
+criterion = {version="0.5.1"}
+[[bench]]
+name = "solver_bench"
+harness = false
+# # These options are what provides the best performance
+[profile.bench]
+opt-level = 3
+debug = false
+lto = 'fat'
+codegen-units = 1
+incremental = false
 
 [package.metadata.docs.rs]
 # To build locally use

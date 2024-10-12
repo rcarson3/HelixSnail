@@ -1,4 +1,5 @@
-use core::fmt::{self, Debug};
+use core::fmt::{self, Debug, Display};
+use core::error::{Error};
 
 mod private {
     #[derive(Debug)]
@@ -8,7 +9,7 @@ mod private {
 /// The error type used by this library.
 /// This can encapsulate our nonlinear solver and linear solver errors,
 /// and whatever else we might come up with in the future.
-pub enum Error {
+pub enum SolverError {
     /// Initial evaluation of nonlinear problem compute_resid_jacobian failed
     InitialEvalFailure,
     /// Evaluation of nonlinear problem compute_resid_jacobian failed
@@ -27,29 +28,36 @@ pub enum Error {
     Unset,
     /// A small pivot aka a row nominally full of zeros caused the solver to fail
     SmallPivot,
-
     #[doc(hidden)]
     __NonExhaustive(private::Private),
 }
 
-impl Debug for Error {
+impl Error for SolverError {}
+
+impl Display for SolverError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::AlgorithmFailure => write!(f, "Nonlinear solver status algorithm failure"),
-            Error::DeltaFailure => write!(f, "Nonlinear solver status delta failure"),
-            Error::EvalFailure => write!(f, "Nonlinear solver status eval failure"),
-            Error::InitialEvalFailure => write!(f, "Nonlinear solver status initial eval failure"),
-            Error::SlowConvergence => write!(f, "Nonlinear solver status slow convergence"),
-            Error::SlowJacobian => write!(f, "Nonlinear solver status slow jacobian status"),
-            Error::UnconvergedMaxIter => {
+            SolverError::AlgorithmFailure => write!(f, "Nonlinear solver status algorithm failure"),
+            SolverError::DeltaFailure => write!(f, "Nonlinear solver status delta failure"),
+            SolverError::EvalFailure => write!(f, "Nonlinear solver status eval failure"),
+            SolverError::InitialEvalFailure => write!(f, "Nonlinear solver status initial eval failure"),
+            SolverError::SlowConvergence => write!(f, "Nonlinear solver status slow convergence"),
+            SolverError::SlowJacobian => write!(f, "Nonlinear solver status slow jacobian status"),
+            SolverError::UnconvergedMaxIter => {
                 write!(f, "Nonlinear solver status unconverged max iterations")
             }
-            Error::Unset => write!(f, "Nonlinear solver status unset"),
-            Error::SmallPivot => write!(
+            SolverError::Unset => write!(f, "Nonlinear solver status unset"),
+            SolverError::SmallPivot => write!(
                 f,
                 "Linear solver was not able to pivot due to an entire row being almost 0"
             ),
-            Error::__NonExhaustive(_) => unreachable!(),
+            SolverError::__NonExhaustive(_) => unreachable!(),
         }
+    }
+}
+
+impl Debug for SolverError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }

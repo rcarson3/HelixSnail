@@ -98,9 +98,9 @@ where
 
             let dfndxn = three - four * x[Self::NDIM - 1];
             // F(n-1) = ((3-2*x[n-1])*x[n-1] - x[n-2] + 1)^2;
-            jacobian[(Self::NDIM - 1)][(Self::NDIM - 1)] =
+            jacobian[Self::NDIM - 1][Self::NDIM - 1] =
                 (F::one() - self.lambda) * dfndxn + self.lambda * two * dfndxn * fcn;
-            jacobian[(Self::NDIM - 1)][(Self::NDIM - 2)] =
+            jacobian[Self::NDIM - 1][Self::NDIM - 2] =
                 (-F::one() + self.lambda) * F::one() - self.lambda * two * fcn;
         }
 
