@@ -3,15 +3,13 @@
 extern crate env_logger;
 extern crate helix_snail;
 extern crate num_traits as libnum;
-
-#[macro_use]
-extern crate criterion;
+extern crate divan;
 
 use helix_snail::nonlinear_solver::*;
 use helix_snail::linear_algebra::math::*;
 use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::{info, error};
-use criterion::{black_box, Criterion};
+use divan::black_box;
 
 const LOGGING_LEVEL: i32 = 0;
 
@@ -95,131 +93,138 @@ where
     }
 }
 
-fn broyden_bench_f64() {
-    let _ = env_logger::builder().is_test(true).try_init();
+#[divan::bench_group (
+    min_time = 1.0,
+    max_time = 5.0, // seconds
+    sample_size = 500,
+    sample_count = 1000,
+)]
+mod nonlinear_solver {
+    use crate::*;
 
-    let mut broyden = Broyden::<f64> {
-        lambda: 0.9999,
-        logging_level: LOGGING_LEVEL,
-    };
-
-    let dc = TrustRegionDeltaControl::<f64> {
-        delta_init: 1.0,
-        ..Default::default()
-    };
-
-    let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
-
-    for i in 0..Broyden::<f64>::NDIM {
-        solver.x[i] = 0.0;
-    }
-
-    solver.set_logging_level(Some(LOGGING_LEVEL));
-    solver.setup_options(Broyden::<f64>::NDIM * 10, 1e-12, Some(LOGGING_LEVEL));
-
-    let err = solver.solve();
-
-    let status = match err {
-        Ok(()) => true,
-        Err(e) => {
-            error!("Solution did not converge with following error {:?}", e);
-            false
+    #[divan::bench(
+        name = "broyden_f64",
+    )]
+    fn broyden_bench_f64() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    
+        let mut broyden = Broyden::<f64> {
+            lambda: 0.9999,
+            logging_level: LOGGING_LEVEL,
+        };
+    
+        let dc = TrustRegionDeltaControl::<f64> {
+            delta_init: 1.0,
+            ..Default::default()
+        };
+    
+        let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
+    
+        for i in 0..Broyden::<f64>::NDIM {
+            solver.x[i] = 0.0;
         }
-    };
-
-    assert!(
-        status == true,
-        "Solution did not converge"
-    );
-}
-
-fn broyden_bench_f32() {
-    let _ = env_logger::builder().is_test(true).try_init();
-
-    let mut broyden = Broyden::<f32> {
-        lambda: 0.9999,
-        logging_level: LOGGING_LEVEL,
-    };
-
-    let dc = TrustRegionDeltaControl::<f32> {
-        delta_init: 1.0,
-        ..Default::default()
-    };
-
-    let mut solver = TrustRegionDoglegSolver::<{Broyden::<f32>::NDIM}, f32, Broyden<f32>>::new(&dc, &mut broyden);
-
-    for i in 0..Broyden::<f32>::NDIM {
-        solver.x[i] = 0.0;
+    
+        solver.set_logging_level(Some(LOGGING_LEVEL));
+        solver.setup_options(Broyden::<f64>::NDIM * 10, 1e-12, Some(LOGGING_LEVEL));
+    
+        let err = solver.solve();
+    
+        let status = match err {
+            Ok(()) => true,
+            Err(e) => {
+                error!("Solution did not converge with following error {:?}", e);
+                false
+            }
+        };
+    
+        assert!(
+            status == true,
+            "Solution did not converge"
+        );
     }
-
-    solver.set_logging_level(Some(LOGGING_LEVEL));
-    solver.setup_options(Broyden::<f32>::NDIM * 10, 1e-6, Some(LOGGING_LEVEL));
-
-    let err = solver.solve();
-
-    let status = match err {
-        Ok(()) => true,
-        Err(e) => {
-            error!("Solution did not converge with following error {:?}", e);
-            false
+    
+    #[divan::bench(
+        name = "broyden_f32",
+    )]
+    fn broyden_bench_f32() {
+        let _ = env_logger::builder().is_test(true).try_init();
+    
+        let mut broyden = Broyden::<f32> {
+            lambda: 0.9999,
+            logging_level: LOGGING_LEVEL,
+        };
+    
+        let dc = TrustRegionDeltaControl::<f32> {
+            delta_init: 1.0,
+            ..Default::default()
+        };
+    
+        let mut solver = TrustRegionDoglegSolver::<{Broyden::<f32>::NDIM}, f32, Broyden<f32>>::new(&dc, &mut broyden);
+    
+        for i in 0..Broyden::<f32>::NDIM {
+            solver.x[i] = 0.0;
         }
-    };
-
-    assert!(
-        status == true,
-        "Solution did not converge"
-    );
-}
-
-pub fn outer_prod_2<const NDIM: usize, const MDIM: usize, F>(vec1: &[F], vec2: &[F], matrix: &mut [[F; MDIM]])
-where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
-{
-    assert!(matrix.len() >= NDIM);
-    assert!(vec1.len() >= MDIM);
-    assert!(vec2.len() >= NDIM);
-
-    for i_n in 0..NDIM {
-        for j_m in 0..MDIM {
-            matrix[i_n][j_m] = vec1[i_n] * vec2[j_m];
-        }
+    
+        solver.set_logging_level(Some(LOGGING_LEVEL));
+        solver.setup_options(Broyden::<f32>::NDIM * 10, 1e-6, Some(LOGGING_LEVEL));
+    
+        let err = solver.solve();
+    
+        let status = match err {
+            Ok(()) => true,
+            Err(e) => {
+                error!("Solution did not converge with following error {:?}", e);
+                false
+            }
+        };
+    
+        assert!(
+            status == true,
+            "Solution did not converge"
+        );
     }
 }
 
-fn nl_solver_wrapper(c: &mut Criterion) {
-    let mut group = c.benchmark_group("nl_solver");
-
-    group.sample_size(500);
-    group.bench_function("broyden_bench_f64", |b| {
-        b.iter(|| broyden_bench_f64())
-    });
-    group.bench_function("broyden_bench_f32", |b| {
-        b.iter(|| broyden_bench_f32())
-    });
-    group.finish();
-}
-
-fn math_wrapper(c: &mut Criterion) {
-    let mut group = c.benchmark_group("math");
-
+#[divan::bench_group (
+    min_time = 1.0,
+    max_time = 5.0, // seconds
+    sample_size = 500,
+    sample_count = 1000,
+)]
+mod math {
+    use crate::*;
     const NDIM: usize = 12;
-
-    let mut vec1: [f64; NDIM] = [0.0; NDIM];
-    let mut vec2: [f64; NDIM] = [0.0; NDIM];
-    let mut matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
-
-    for i in 0..NDIM {
-        vec1[i] = i as f64 + 1.0_f64;
-        vec2[i] = i as f64;
+    #[divan::bench(
+        name = "outer_prod_instantiation",
+    )]
+    fn outer_prod_instantiation() -> ([f64; NDIM], [f64; NDIM], [[f64; NDIM]; NDIM]) {
+        let mut vec1: [f64; NDIM] = [0.0; NDIM];
+        let mut vec2: [f64; NDIM] = [0.0; NDIM];
+        let matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
+    
+        for i in 0..NDIM {
+            vec1[i] = i as f64 + 1.0_f64;
+            vec2[i] = i as f64;
+        }
+        (vec1, vec2, matrix2)
     }
 
-    group.sample_size(500);
-    group.bench_function("outer_prod_f64", |b| {
-        b.iter(|| outer_prod::<{NDIM}, {NDIM}, f64>(black_box(&vec1), black_box(&vec2), black_box(&mut matrix2)))
-    });
-
-    group.finish();
+    #[divan::bench(
+        name = "outer_prod_whole",
+    )]
+    fn outer_prod_local() {
+        let mut vec1: [f64; NDIM] = [0.0; NDIM];
+        let mut vec2: [f64; NDIM] = [0.0; NDIM];
+        let mut matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
+    
+        for i in 0..NDIM {
+            vec1[i] = i as f64 + 1.0_f64;
+            vec2[i] = i as f64;
+        }
+        outer_prod::<{NDIM}, {NDIM}, f64>(black_box(&vec1), black_box(&vec2), black_box(&mut matrix2))
+    }
 }
 
-criterion_group!(benches, nl_solver_wrapper, math_wrapper);
-criterion_main!(benches);
+fn main() {
+    divan::main();
+}

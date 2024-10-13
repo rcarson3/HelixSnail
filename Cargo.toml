@@ -26,7 +26,7 @@ linear_algebra = []
 env_logger = {version = "0.11.5", default-features = false}
 paste = {version = "1.0.6"}
 # Only use this for bench tests as this takes up way too much time to compile
-criterion = {version="0.5.1"}
+divan = {version="0.1.14"}
 [[bench]]
 name = "solver_bench"
 harness = false
