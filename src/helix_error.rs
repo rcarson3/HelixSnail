@@ -1,5 +1,5 @@
+use core::error::Error;
 use core::fmt::{self, Debug, Display};
-use core::error::{Error};
 
 mod private {
     #[derive(Debug)]
@@ -40,7 +40,9 @@ impl Display for SolverError {
             SolverError::AlgorithmFailure => write!(f, "Nonlinear solver status algorithm failure"),
             SolverError::DeltaFailure => write!(f, "Nonlinear solver status delta failure"),
             SolverError::EvalFailure => write!(f, "Nonlinear solver status eval failure"),
-            SolverError::InitialEvalFailure => write!(f, "Nonlinear solver status initial eval failure"),
+            SolverError::InitialEvalFailure => {
+                write!(f, "Nonlinear solver status initial eval failure")
+            }
             SolverError::SlowConvergence => write!(f, "Nonlinear solver status slow convergence"),
             SolverError::SlowJacobian => write!(f, "Nonlinear solver status slow jacobian status"),
             SolverError::UnconvergedMaxIter => {

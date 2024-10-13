@@ -1,18 +1,17 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
+extern crate divan;
 extern crate env_logger;
 extern crate helix_snail;
 extern crate num_traits as libnum;
-extern crate divan;
 
-use helix_snail::nonlinear_solver::*;
-use helix_snail::linear_algebra::math::*;
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
-use log::{info, error};
 use divan::black_box;
+use helix_snail::linear_algebra::math::*;
+use helix_snail::nonlinear_solver::*;
+use libnum::{Float, NumAssignOps, NumOps, One, Zero};
+use log::{error, info};
 
 const LOGGING_LEVEL: i32 = 0;
-
 
 struct Broyden<F>
 where
@@ -33,7 +32,10 @@ where
         fcn_eval: &mut [F],
         opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
     ) -> bool {
-        assert!(Self::NDIM == NDIM, "Self::NDIM and const NDIMs are not equal...");
+        assert!(
+            Self::NDIM == NDIM,
+            "Self::NDIM and const NDIMs are not equal..."
+        );
         assert!(fcn_eval.len() >= Self::NDIM);
         assert!(x.len() >= Self::NDIM);
 
@@ -59,11 +61,7 @@ where
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
         if let Some(jacobian) = opt_jacobian {
-            assert!(
-                jacobian.len() >= Self::NDIM,
-                "length {:?}",
-                jacobian.len()
-            );
+            assert!(jacobian.len() >= Self::NDIM, "length {:?}", jacobian.len());
 
             // zero things out first
             for item in jacobian.iter_mut().take(NDIM) {
@@ -102,33 +100,35 @@ where
 mod nonlinear_solver {
     use crate::*;
 
-    #[divan::bench(
-        name = "broyden_f64",
-    )]
+    #[divan::bench(name = "broyden_f64")]
     fn broyden_bench_f64() {
         let _ = env_logger::builder().is_test(true).try_init();
-    
+
         let mut broyden = Broyden::<f64> {
             lambda: 0.9999,
             logging_level: LOGGING_LEVEL,
         };
-    
+
         let dc = TrustRegionDeltaControl::<f64> {
             delta_init: 1.0,
             ..Default::default()
         };
-    
-        let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
-    
+
+        let mut solver =
+            TrustRegionDoglegSolver::<{ Broyden::<f64>::NDIM }, f64, Broyden<f64>>::new(
+                &dc,
+                &mut broyden,
+            );
+
         for i in 0..Broyden::<f64>::NDIM {
             solver.x[i] = 0.0;
         }
-    
+
         solver.set_logging_level(Some(LOGGING_LEVEL));
         solver.setup_options(Broyden::<f64>::NDIM * 10, 1e-12, Some(LOGGING_LEVEL));
-    
+
         let err = solver.solve();
-    
+
         let status = match err {
             Ok(()) => true,
             Err(e) => {
@@ -136,40 +136,39 @@ mod nonlinear_solver {
                 false
             }
         };
-    
-        assert!(
-            status == true,
-            "Solution did not converge"
-        );
+
+        assert!(status == true, "Solution did not converge");
     }
-    
-    #[divan::bench(
-        name = "broyden_f32",
-    )]
+
+    #[divan::bench(name = "broyden_f32")]
     fn broyden_bench_f32() {
         let _ = env_logger::builder().is_test(true).try_init();
-    
+
         let mut broyden = Broyden::<f32> {
             lambda: 0.9999,
             logging_level: LOGGING_LEVEL,
         };
-    
+
         let dc = TrustRegionDeltaControl::<f32> {
             delta_init: 1.0,
             ..Default::default()
         };
-    
-        let mut solver = TrustRegionDoglegSolver::<{Broyden::<f32>::NDIM}, f32, Broyden<f32>>::new(&dc, &mut broyden);
-    
+
+        let mut solver =
+            TrustRegionDoglegSolver::<{ Broyden::<f32>::NDIM }, f32, Broyden<f32>>::new(
+                &dc,
+                &mut broyden,
+            );
+
         for i in 0..Broyden::<f32>::NDIM {
             solver.x[i] = 0.0;
         }
-    
+
         solver.set_logging_level(Some(LOGGING_LEVEL));
         solver.setup_options(Broyden::<f32>::NDIM * 10, 1e-6, Some(LOGGING_LEVEL));
-    
+
         let err = solver.solve();
-    
+
         let status = match err {
             Ok(()) => true,
             Err(e) => {
@@ -177,11 +176,8 @@ mod nonlinear_solver {
                 false
             }
         };
-    
-        assert!(
-            status == true,
-            "Solution did not converge"
-        );
+
+        assert!(status == true, "Solution did not converge");
     }
 }
 
@@ -194,14 +190,12 @@ mod nonlinear_solver {
 mod math {
     use crate::*;
     const NDIM: usize = 12;
-    #[divan::bench(
-        name = "outer_prod_instantiation",
-    )]
+    #[divan::bench(name = "outer_prod_instantiation")]
     fn outer_prod_instantiation() -> ([f64; NDIM], [f64; NDIM], [[f64; NDIM]; NDIM]) {
         let mut vec1: [f64; NDIM] = [0.0; NDIM];
         let mut vec2: [f64; NDIM] = [0.0; NDIM];
         let matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
-    
+
         for i in 0..NDIM {
             vec1[i] = i as f64 + 1.0_f64;
             vec2[i] = i as f64;
@@ -209,19 +203,21 @@ mod math {
         (vec1, vec2, matrix2)
     }
 
-    #[divan::bench(
-        name = "outer_prod_whole",
-    )]
+    #[divan::bench(name = "outer_prod_whole")]
     fn outer_prod_local() {
         let mut vec1: [f64; NDIM] = [0.0; NDIM];
         let mut vec2: [f64; NDIM] = [0.0; NDIM];
         let mut matrix2: [[f64; NDIM]; NDIM] = [[0.0; NDIM]; NDIM];
-    
+
         for i in 0..NDIM {
             vec1[i] = i as f64 + 1.0_f64;
             vec2[i] = i as f64;
         }
-        outer_prod::<{NDIM}, {NDIM}, f64>(black_box(&vec1), black_box(&vec2), black_box(&mut matrix2))
+        outer_prod::<{ NDIM }, { NDIM }, f64>(
+            black_box(&vec1),
+            black_box(&vec2),
+            black_box(&mut matrix2),
+        )
     }
 }
 
