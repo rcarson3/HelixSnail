@@ -9,13 +9,11 @@ pub use self::delta_control::*;
 pub use self::dogleg::*;
 pub use self::tr_dogleg_solver::*;
 
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
-
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
 pub trait NonlinearSolver<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
     const NDIM: usize;
@@ -79,7 +77,7 @@ where
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
 pub trait NonlinearProblem<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     /// Dimension of the nonlinear system of equations
     const NDIM: usize;

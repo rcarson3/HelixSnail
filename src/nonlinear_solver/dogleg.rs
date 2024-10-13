@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use crate::linear_algebra::dot_prod;
-use crate::nonlinear_solver::*;
 
 /// The dogleg is an approach to solving the update step of a nonlinear system of equations.
 /// It is originally described in:
@@ -33,7 +32,7 @@ pub fn dogleg<const NDIM: usize, F>(
     predicted_residual: &mut F,
     use_newton_raphson: &mut bool,
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(gradient.len() >= NDIM);
     assert!(newton_raphson_step.len() >= NDIM);

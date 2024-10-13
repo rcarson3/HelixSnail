@@ -8,14 +8,13 @@ extern crate num_traits as libnum;
 use divan::black_box;
 use helix_snail::linear_algebra::math::*;
 use helix_snail::nonlinear_solver::*;
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::{error, info};
 
 const LOGGING_LEVEL: i32 = 0;
 
 struct Broyden<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: helix_snail::FloatType,
 {
     lambda: F,
     pub logging_level: i32,
@@ -23,7 +22,7 @@ where
 
 impl<F> NonlinearProblem<F> for Broyden<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: helix_snail::FloatType,
 {
     const NDIM: usize = 8;
     fn compute_resid_jacobian<const NDIM: usize>(

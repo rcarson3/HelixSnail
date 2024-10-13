@@ -1,5 +1,5 @@
 use core::result::Result;
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
+use libnum::Float;
 use log::info;
 
 use crate::linear_algebra::norm;
@@ -7,7 +7,7 @@ use crate::linear_algebra::norm;
 /// The DeltaControl trait is used to define what an acceptable step size is in our solution step size
 pub trait DeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps,
+    F: crate::FloatType,
 {
     /// Returns the initial acceptable step size of the solution
     fn get_delta_initial(&self) -> F;
@@ -57,7 +57,7 @@ where
 /// Algorithm A6.4.5 contains variations of the below formulation of things
 pub struct TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     pub xi_lg: F,
     pub xi_ug: F,
@@ -78,7 +78,7 @@ where
 
 impl<F> Default for TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     /// Sane default values for the delta control
     /// One can generally play around with values of xi_* to help their system
@@ -116,7 +116,7 @@ where
 
 impl<F> TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     /// Simple check to ensure that the parameters being used are consistent with one another and usable
     #[allow(dead_code)]
@@ -203,7 +203,7 @@ where
 
 impl<F> DeltaControl<F> for TrustRegionDeltaControl<F>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     fn get_delta_initial(&self) -> F {
         self.delta_init

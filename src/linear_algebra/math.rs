@@ -1,11 +1,10 @@
 #![allow(dead_code)]
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 
 /// Dot product of two vectors
 /// vec1 and vec2 both have lengths NDIM
 pub fn dot_prod<const NDIM: usize, F>(vec1: &[F], vec2: &[F]) -> F
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(vec1.len() >= NDIM);
     assert!(vec2.len() >= NDIM);
@@ -23,7 +22,7 @@ where
 /// where vec has length NDIM
 pub fn norm<const NDIM: usize, F>(vec: &[F]) -> F
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(vec.len() >= NDIM);
     F::sqrt(dot_prod::<NDIM, F>(vec, vec))
@@ -36,7 +35,7 @@ pub fn norm_column<const NDIM: usize, const MDIM: usize, F>(
     matrix: &[[F; MDIM]],
     norm_vec: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix.len() >= NDIM);
     assert!(norm_vec.len() >= MDIM);
@@ -69,7 +68,7 @@ pub fn outer_prod<const NDIM: usize, const MDIM: usize, F>(
     vec2: &[F],
     matrix: &mut [[F; MDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix.len() >= NDIM);
     assert!(vec1.len() >= MDIM);
@@ -94,7 +93,7 @@ pub fn outer_prod_add_scale<const NDIM: usize, const MDIM: usize, F>(
     scale: Option<F>,
     matrix: &mut [[F; MDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix.len() >= NDIM);
     assert!(vec1.len() >= MDIM);
@@ -118,7 +117,7 @@ pub fn mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     vec: &[F],
     prod: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= MDIM);
@@ -140,7 +139,7 @@ pub fn mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     vec: &[F],
     prod: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix.len() >= NDIM);
     assert!(vec.len() >= NDIM);
@@ -166,7 +165,7 @@ pub fn upper_tri_mat_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     vec: &[F],
     prod: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(NDIM <= MDIM);
     assert!(matrix.len() >= NDIM);
@@ -193,7 +192,7 @@ pub fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
     vec: &[F],
     prod: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(NDIM <= MDIM);
     assert!(matrix.len() >= NDIM);
@@ -229,7 +228,7 @@ pub fn mat_mat_mult<
     matrix2: &[[F; MDIM]],
     prod_matrix: &mut [[F; MDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix1.len() >= LDIM);
     assert!(matrix2.len() >= NDIM);
@@ -272,7 +271,7 @@ pub fn mat_t_mat_mult<
     matrix2: &[[F; MDIM]],
     prod_matrix: &mut [[F; MDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix1.len() >= NDIM);
     assert!(matrix2.len() >= NDIM);
@@ -315,7 +314,7 @@ pub fn mat_mat_t_mult<
     matrix2: &[[F; NDIM]],
     prod_matrix: &mut [[F; MDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(matrix1.len() >= LDIM);
     assert!(matrix2.len() >= MDIM);
@@ -354,7 +353,7 @@ pub fn rotate_matrix<const NDIM: usize, const TRANSPOSE: bool, F>(
     matrix: &[[F; NDIM]],
     prod_matrix: &mut [[F; NDIM]],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(rot_matrix.len() >= NDIM);
     assert!(matrix.len() >= NDIM);

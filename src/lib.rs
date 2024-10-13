@@ -6,6 +6,10 @@
 extern crate log;
 extern crate num_traits as libnum;
 
+// Once trait aliases are stabilized can replace these two lines with:
+// pub trait FloatType = libnum::Float + libnum::Zero + libnum::One + libnum::NumAssignOps + libnum::NumOps + core::fmt::Debug;
+pub trait FloatType: libnum::Float + libnum::Zero + libnum::One + libnum::NumAssignOps + libnum::NumOps + core::fmt::Debug {}
+impl<F: libnum::Float + libnum::Zero + libnum::One + libnum::NumAssignOps + libnum::NumOps + core::fmt::Debug> FloatType for F {}
 /// Contains the basic error types for our solvers whether they're either from our nonlinear or linear solvers.
 pub mod helix_error;
 /// Contains our various nonlinear solvers and functionality related to these solvers such as the traits

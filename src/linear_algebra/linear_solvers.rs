@@ -1,5 +1,4 @@
 use core::result::Result;
-use libnum::{Float, NumAssignOps, NumOps, One, Zero};
 use log::error;
 
 /// Decomposes our matrix into a partially pivoted LU decomposition, we supply a tolerance
@@ -19,7 +18,7 @@ pub fn lup_decompose<const NDIM: usize, F>(
     pivot: &mut [usize],
 ) -> Result<(), crate::helix_error::SolverError>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(pivot.len() > NDIM);
     assert!(matrix.len() >= NDIM);
@@ -87,7 +86,7 @@ pub fn lup_solve<const NDIM: usize, F>(
     pivot: &[usize],
     solution: &mut [F],
 ) where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
 {
     assert!(pivot.len() > NDIM);
     assert!(solution.len() >= NDIM);
@@ -125,7 +124,7 @@ pub fn lup_solver<const NDIM: usize, F>(
     solution: &mut [F],
 ) -> Result<(), crate::helix_error::SolverError>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
     [F; NDIM + 1]: Sized,
 {
     assert!(solution.len() >= NDIM);

@@ -12,7 +12,7 @@ use log::info;
 /// when a given step is near the solution.
 pub struct TrustRegionDoglegSolver<'a, const NP_NDIM: usize, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
     NP: NonlinearProblem<F>,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
@@ -46,7 +46,7 @@ where
 
 impl<'a, const NP_NDIM: usize, F, NP> TrustRegionDoglegSolver<'a, NP_NDIM, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
     NP: NonlinearProblem<F>,
 {
     /// The size of the jacobian
@@ -112,7 +112,7 @@ where
 impl<'a, const NP_NDIM: usize, F, NP> NonlinearSolver<F>
     for TrustRegionDoglegSolver<'a, NP_NDIM, F, NP>
 where
-    F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
+    F: crate::FloatType,
     NP: NonlinearProblem<F>,
     [F; NP_NDIM + 1]: Sized,
 {
