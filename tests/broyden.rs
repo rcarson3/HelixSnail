@@ -37,11 +37,17 @@ where
     pub logging_level: i32,
 }
 
-impl<F> NonlinearProblem<F> for Broyden<F>
+impl<F> NonlinearSystemSize for Broyden<F>
 where
     F: helix_snail::FloatType,
 {
     const NDIM: usize = 8;
+}
+
+impl<F> NonlinearProblem<F> for Broyden<F>
+where
+    F: helix_snail::FloatType,
+{
     fn compute_resid_jacobian<const NDIM: usize>(
         &mut self,
         x: &[F],
@@ -133,7 +139,7 @@ macro_rules! broyden_tr_dogleg_tests {
                         ..Default::default()
                     };
                     {
-                        let mut solver = TrustRegionDoglegSolver::<{Broyden::<$type>::NDIM}, $type, Broyden<$type>>::new(&dc, &mut broyden);
+                        let mut solver = TrustRegionDoglegSolver::<$type, Broyden<$type>>::new(&dc, &mut broyden);
 
                         for i in 0..Broyden::<$type>::NDIM {
                             solver.x[i] = 0.0;

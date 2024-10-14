@@ -6,6 +6,7 @@ extern crate helix_snail;
 extern crate num_traits as libnum;
 
 use divan::black_box;
+#[cfg(feature = "linear_algebra")]
 use helix_snail::linear_algebra::math::*;
 use helix_snail::nonlinear_solver::*;
 use log::{error, info};
@@ -20,11 +21,17 @@ where
     pub logging_level: i32,
 }
 
-impl<F> NonlinearProblem<F> for Broyden<F>
+impl<F> NonlinearSystemSize for Broyden<F>
 where
     F: helix_snail::FloatType,
 {
     const NDIM: usize = 8;
+}
+
+impl<F> NonlinearProblem<F> for Broyden<F>
+where
+    F: helix_snail::FloatType,
+{
     fn compute_resid_jacobian<const NDIM: usize>(
         &mut self,
         x: &[F],
@@ -114,7 +121,7 @@ mod nonlinear_solver {
         };
 
         let mut solver =
-            TrustRegionDoglegSolver::<{ Broyden::<f64>::NDIM }, f64, Broyden<f64>>::new(
+            TrustRegionDoglegSolver::<f64, Broyden<f64>>::new(
                 &dc,
                 &mut broyden,
             );
@@ -154,7 +161,7 @@ mod nonlinear_solver {
         };
 
         let mut solver =
-            TrustRegionDoglegSolver::<{ Broyden::<f32>::NDIM }, f32, Broyden<f32>>::new(
+            TrustRegionDoglegSolver::<f32, Broyden<f32>>::new(
                 &dc,
                 &mut broyden,
             );
@@ -186,6 +193,7 @@ mod nonlinear_solver {
     sample_size = 500,
     sample_count = 1000,
 )]
+#[cfg(feature = "linear_algebra")]
 mod math {
     use crate::*;
     const NDIM: usize = 12;

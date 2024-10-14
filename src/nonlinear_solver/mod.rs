@@ -9,14 +9,17 @@ pub use self::delta_control::*;
 pub use self::dogleg::*;
 pub use self::tr_dogleg_solver::*;
 
+pub trait NonlinearSystemSize {
+    /// Size of nonlinear system of equations which should be consistent with nonlinear problem
+    const NDIM: usize;
+}
+
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
-pub trait NonlinearSolver<F>
+pub trait NonlinearSolver<F> : NonlinearSystemSize
 where
     F: crate::FloatType,
 {
-    /// Size of nonlinear system of equations which should be consistent with nonlinear problem
-    const NDIM: usize;
     /// Values required to setup solver
     ///
     /// # Arguments
@@ -75,13 +78,10 @@ where
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
-pub trait NonlinearProblem<F>
+pub trait NonlinearProblem<F> : NonlinearSystemSize
 where
     F: crate::FloatType,
 {
-    /// Dimension of the nonlinear system of equations
-    const NDIM: usize;
-
     /// This function at a minimum computes the residual / function evaluation of the system of nonlinear equations
     /// that we are solving for. It is expected that fcn_eval and opt_jacobian have been scaled such that the solution
     /// variable x nominally remains in the neighborhood of [-1, 1] as this provides better numerical stability of
