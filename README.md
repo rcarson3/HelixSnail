@@ -41,11 +41,17 @@ The below example is taken from the test suit, but it shows how to define your n
  pub logging_level: i32,
  }
 
+impl<F> NonlinearSystemSize for Broyden<F>
+where
+    F: helix_snail::FloatType,
+{
+    const NDIM: usize = 8;
+}
+
 impl<F> NonlinearProblem<F> for Broyden<F>
 where
     F: Float + Zero + One + NumAssignOps + NumOps + core::fmt::Debug,
 {
-    const NDIM: usize = 8;
     fn compute_resid_jacobian<const NDIM: usize>(
         &mut self,
         x: &[F],
@@ -125,7 +131,7 @@ where
          ..Default::default()
      };
 
-     let mut solver = TrustRegionDoglegSolver::<{Broyden::<f64>::NDIM}, f64, Broyden<f64>>::new(&dc, &mut broyden);
+     let mut solver = TrustRegionDoglegSolver::<f64, Broyden<f64>>::new(&dc, &mut broyden);
 
      for i in 0..Broyden::<f64>::NDIM {
          solver.x[i] = 0.0;
