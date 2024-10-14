@@ -94,7 +94,7 @@ where
     where
         [F; NP::NDIM + 1]: Sized,
     {
-        lup_solver::<{ NP::NDIM }, F>(residual, jacobian, newton_step)?;
+        lup_solver(residual, jacobian, newton_step)?;
         for item in newton_step.iter_mut().take(NP::NDIM) {
             *item *= -F::one();
         }

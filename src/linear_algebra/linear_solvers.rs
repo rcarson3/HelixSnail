@@ -134,10 +134,10 @@ where
     let mut pivot = [0; NDIM + 1];
     let tolerance: F = F::from(1e-35).unwrap();
 
-    lup_decompose::<{ NDIM }, F>(tolerance, matrix, &mut pivot)?;
+    lup_decompose(tolerance, matrix, &mut pivot)?;
 
     // Don't worry about pivoting matrix back to original form as we don't use LU in rest of code
-    lup_solve::<{ NDIM }, F>(matrix, rhs, &pivot, solution);
+    lup_solve(matrix, rhs, &pivot, solution);
 
     Ok(())
 }
