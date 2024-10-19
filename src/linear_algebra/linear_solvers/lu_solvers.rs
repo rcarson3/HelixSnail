@@ -125,7 +125,7 @@ pub fn lup_solver<const NDIM: usize, F>(
 ) -> Result<(), crate::helix_error::SolverError>
 where
     F: crate::FloatType,
-    [F; NDIM + 1]: Sized,
+    [(); NDIM + 1]: Sized,
 {
     assert!(solution.len() >= NDIM);
     assert!(rhs.len() >= NDIM);
