@@ -14,7 +14,7 @@ pub struct TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearProblem<F> + Sized,
-    [f64; NP::NDIM]: Sized,
+    [(); NP::NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
@@ -92,7 +92,7 @@ where
         newton_step: &mut [F],
     ) -> Result<(), crate::helix_error::SolverError>
     where
-        [F; NP::NDIM + 1]: Sized,
+        [(); NP::NDIM + 1]: Sized,
     {
         lup_solver(residual, jacobian, newton_step)?;
         for item in newton_step.iter_mut().take(NP::NDIM) {
@@ -115,7 +115,7 @@ impl<'a, F, NP> NonlinearSystemSize for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearProblem<F>,
-    [F; NP::NDIM]: Sized,
+    [(); NP::NDIM]: Sized,
 {
     const NDIM: usize = NP::NDIM;
 }
@@ -125,7 +125,7 @@ impl<'a, F, NP> NonlinearSolver<F>
 where
     F: crate::FloatType,
     NP: NonlinearProblem<F>,
-    [F; NP::NDIM + 1]: Sized,
+    [(); NP::NDIM + 1]: Sized,
 {
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
         self.converged = false;
