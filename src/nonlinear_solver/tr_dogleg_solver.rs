@@ -49,7 +49,7 @@ impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearProblem<F>,
-    [f64; NP::NDIM]: Sized,
+    [(); NP::NDIM]: Sized,
 {
     /// The size of the jacobian
     const NDIM2: usize = NP::NDIM * NP::NDIM;
@@ -272,7 +272,8 @@ where
             NP::NDIM == NDIM,
             "Self::NDIM/NP_NDIM and const NDIMs are not equal..."
         );
+        let jac = crate::array2d_to_array1d_mut(jacobian);
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, &mut Some(jacobian))
+            .compute_resid_jacobian(&self.x, fcn_eval, &mut Some(jac))
     }
 }

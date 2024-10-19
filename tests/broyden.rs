@@ -47,17 +47,14 @@ where
 impl<F> NonlinearProblem<F> for Broyden<F>
 where
     F: helix_snail::FloatType,
+    [(); Self::NDIM]:
 {
-    fn compute_resid_jacobian<const NDIM: usize>(
+    fn compute_resid_jacobian(
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [F]>,
     ) -> bool {
-        assert!(
-            Self::NDIM == NDIM,
-            "Self::NDIM and const NDIMs are not equal..."
-        );
         assert!(fcn_eval.len() >= Self::NDIM);
         assert!(x.len() >= Self::NDIM);
 
@@ -82,11 +79,12 @@ where
 
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
-        if let Some(jacobian) = opt_jacobian {
-            assert!(jacobian.len() >= Self::NDIM, "length {:?}", jacobian.len());
+        if let Some(jac) = opt_jacobian {
+            assert!(jac.len() >= Self::NDIM * Self::NDIM, "length {:?}", jac.len());
+            let jacobian = helix_snail::array1d_to_array2d_mut::<{Self::NDIM}, F>(jac);
 
             // zero things out first
-            for item in jacobian.iter_mut().take(NDIM) {
+            for item in jacobian.iter_mut().take(Self::NDIM) {
                 for val in item.iter_mut() {
                     *val = F::zero();
                 }
@@ -177,3 +175,39 @@ broyden_tr_dogleg_tests! {
     (lambda_0_9_r2, f64, 0.99, 1e-12),
     (lambda_0_9_r2, f32, 0.99, 1e-6),
 }
+
+
+fn array_trials<const NDIM: usize, F>(vec: &[F]) -> &[F]
+where
+    F: helix_snail::FloatType,
+{
+    let mat = helix_snail::array1d_to_array2d::<{NDIM}, F>(vec);
+    helix_snail::array2d_to_array1d(mat)
+}
+
+fn array_trials2<const NDIM: usize, F>(vec: &mut [F]) -> &mut [[F; NDIM]]
+where
+    F: helix_snail::FloatType,
+{
+    helix_snail::array1d_to_array2d_mut::<{NDIM}, F>(vec)
+}
+
+#[test]
+fn array_trial_f64()
+{
+    const NDIM: usize = 12;
+    let mut vec = [0.0_f64; NDIM];
+    for i in 0..NDIM {
+        vec[i] = i as f64;
+    }
+    let vec_slice = array_trials::<4, f64>(&vec);
+    assert!(vec_slice[11] == 11.0);
+
+    let mat_slice = array_trials2::<4, f64>(&mut vec);
+    mat_slice[2][3] = 12.0;
+    assert!(mat_slice[2][3] == 12.0);
+
+    vec[11] = 11.0;
+    assert!(vec[11] == 11.0);
+}
+

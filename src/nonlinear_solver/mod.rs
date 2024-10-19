@@ -94,10 +94,10 @@ where
     ///                   as we don't make use of finite difference methods to estimate the jacobian.
     /// Note that nightly currently isn't flexible enough for us to have this be jacobian: Option(&mut [[F; Self::NDIM]])
     /// so we revert to this instead... where NDIM = Self::NDIM in practice
-    fn compute_resid_jacobian<const NDIM: usize>(
+    fn compute_resid_jacobian(
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [F]>,
     ) -> bool;
 }

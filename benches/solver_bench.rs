@@ -5,6 +5,7 @@ extern crate env_logger;
 extern crate helix_snail;
 extern crate num_traits as libnum;
 
+#[cfg(feature = "linear_algebra")]
 use divan::black_box;
 #[cfg(feature = "linear_algebra")]
 use helix_snail::linear_algebra::math::*;
@@ -31,17 +32,14 @@ where
 impl<F> NonlinearProblem<F> for Broyden<F>
 where
     F: helix_snail::FloatType,
+    [(); Self::NDIM]:
 {
-    fn compute_resid_jacobian<const NDIM: usize>(
+    fn compute_resid_jacobian(
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: &mut Option<&mut [[F; NDIM]]>,
+        opt_jacobian: &mut Option<&mut [F]>,
     ) -> bool {
-        assert!(
-            Self::NDIM == NDIM,
-            "Self::NDIM and const NDIMs are not equal..."
-        );
         assert!(fcn_eval.len() >= Self::NDIM);
         assert!(x.len() >= Self::NDIM);
 
@@ -66,11 +64,12 @@ where
 
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
-        if let Some(jacobian) = opt_jacobian {
-            assert!(jacobian.len() >= Self::NDIM, "length {:?}", jacobian.len());
+        if let Some(jac) = opt_jacobian {
+            assert!(jac.len() >= Self::NDIM * Self::NDIM, "length {:?}", jac.len());
+            let jacobian = helix_snail::array1d_to_array2d_mut::<{Self::NDIM}, F>(jac);
 
             // zero things out first
-            for item in jacobian.iter_mut().take(NDIM) {
+            for item in jacobian.iter_mut().take(Self::NDIM) {
                 for val in item.iter_mut() {
                     *val = F::zero();
                 }

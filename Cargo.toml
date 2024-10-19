@@ -18,6 +18,7 @@ categories = ["algorithms",  "no-std", "mathematics",]
 [dependencies]
 num-traits = {version = "0.2.14", features = ["libm"]}
 log = {version = "0.4.14", default-features = false}
+bytemuck = {version = "1.19", features=["min_const_generics"]}
 
 [features]
 linear_algebra = []
