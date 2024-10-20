@@ -5,9 +5,12 @@ pub mod dogleg;
 /// A dogleg solver that makes use of a trust-region method
 pub mod tr_dogleg_solver;
 
+pub mod hybrid_tr_dogleg_solver;
+
 pub use self::delta_control::*;
 pub use self::dogleg::*;
 pub use self::tr_dogleg_solver::*;
+pub use self::hybrid_tr_dogleg_solver::*;
 
 pub trait NonlinearSystemSize {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
@@ -74,6 +77,18 @@ where
         &mut self,
         fcn_eval: &mut [F],
         jacobian: &mut [[F; NDIM]],
+    ) -> bool;
+
+    /// Computes the residual and jacobian of the nonlinear problem
+    ///
+    /// # Arguments
+    /// * `fcn_eval` - the residual / function evaluation of the nonlinear problem
+    ///
+    /// # Outputs
+    /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
+    fn compute_residual(
+        &mut self,
+        fcn_eval: &mut [F]
     ) -> bool;
 }
 

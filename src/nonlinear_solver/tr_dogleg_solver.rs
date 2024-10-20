@@ -272,8 +272,23 @@ where
             NP::NDIM == NDIM,
             "Self::NDIM/NP_NDIM and const NDIMs are not equal..."
         );
+
+        self.function_evals += 1;
+        self.jacobian_evals += 1;
         let jac = crate::array2d_to_array1d_mut(jacobian);
+
         self.crj
             .compute_resid_jacobian(&self.x, fcn_eval, &mut Some(jac))
     }
+
+    fn compute_residual(
+        &mut self,
+        fcn_eval: &mut [F],
+    ) -> bool {
+        self.function_evals += 1;
+
+        self.crj
+            .compute_resid_jacobian(&self.x, fcn_eval, &mut None)
+    }
+
 }

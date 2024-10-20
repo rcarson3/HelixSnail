@@ -1,5 +1,5 @@
-// use core::result::Result;
 // use log::error;
+use core::result::Result;
 use crate::linear_algebra::math::*;
 
 // Need to add an actual QR solver in here at some point. It currently contains just QR factorization functions
@@ -172,6 +172,36 @@ where
     // Now back out the Q array. Although, we could maybe do this inline with the above
     // if we thought about this a bit more.
     householder_q_matrix(matrix_factor, &work_array1, q_matrix);
+}
+
+pub fn qr_solve<const NDIM: usize, F>(
+    r_matrix: &[[F; NDIM]],
+    rhs: &[F],
+    solution: &mut [F],
+) -> Result<(), crate::helix_error::SolverError>
+where
+    F: crate::FloatType,
+    [(); NDIM]: Sized,
+{
+    assert!(solution.len() >= NDIM);
+    assert!(rhs.len() >= NDIM);
+    assert!(r_matrix.len() >= NDIM);
+
+    let tolerance: F = F::from(1e-35).unwrap();
+
+    for i in (0..(NDIM - 1)).rev() {
+        let rmat_val = r_matrix[i][i];
+        if F::abs(rmat_val) < tolerance {
+            return Err(crate::helix_error::SolverError::AlgorithmFailure);
+        }
+
+        let mut sum = F::zero();
+        for j in (i + 1)..NDIM {
+            sum += r_matrix[i][j] * solution[j];
+        }
+        solution[i] = (rhs[i] - sum) / rmat_val;
+    }
+    Ok(())
 }
 
 pub fn make_givens<F: crate::FloatType>(p: F, q: F, givens: &mut [F])
