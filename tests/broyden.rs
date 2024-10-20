@@ -167,7 +167,73 @@ macro_rules! broyden_tr_dogleg_tests {
     }
 }
 
+/// Test macro for the trust region method that uses a dogleg solver for the subspace
+/// for the broyden test problem.
+/// Inputs for this are the extended name we want to go with the initial name broyden_tr_dogleg_$name_$type
+/// $type is either f32 or f64 for the solver
+/// $lambda is the lambda we want the Broyden class to use and be associated with
+/// $tolerance is the tolerance for the solver
+/// Note: we make use of the paste macro in order to be able to actually append names to the function
+/// as this makes our naming convention for things simpler...
+macro_rules! broyden_hybrid_trdg_tests {
+    ($(($name:ident, $type:ident, $lambda:expr, $tolerance:expr),)*) => {
+        $(
+            paste! {
+                #[test]
+                fn [< broyden_hybrid_trdg_ $name _ $type >]() {
+                    let _ = env_logger::builder().is_test(true).try_init();
+
+                    let mut broyden = Broyden::<$type> {
+                        lambda: $lambda,
+                        logging_level: LOGGING_LEVEL,
+                    };
+
+                    let dc = TrustRegionDeltaControl::<$type> {
+                        delta_init: 1.0,
+                        xi_decr_delta: 0.6,
+                        ..Default::default()
+                    };
+                    {
+                        let mut solver = HybridTRDglSolver::<$type, Broyden<$type>>::new(&dc, &mut broyden);
+
+                        for i in 0..Broyden::<$type>::NDIM {
+                            solver.x[i] = 0.0;
+                        }
+
+                        solver.set_logging_level(Some(LOGGING_LEVEL));
+                        solver.setup_options(Broyden::<$type>::NDIM * 10, $tolerance, Some(LOGGING_LEVEL));
+
+                        let err = solver.solve();
+
+                        let status = match err {
+                            Ok(()) => true,
+                            Err(e) => {
+                                error!("Solution did not converge with following error {:?}", e);
+                                false
+                            }
+                        };
+
+                        assert!(
+                            status == true,
+                            "Solution did not converge"
+                        );
+                    }
+                }
+            }
+        )*
+    }
+}
+
 broyden_tr_dogleg_tests! {
+    (lambda_0_9_r4, f64, 0.9999, 1e-12),
+    (lambda_0_9_r4, f32, 0.9999, 1e-6),
+    (lambda_0_9_r8, f64, 0.99999999, 1e-12),
+    (lambda_0_9_r8, f32, 0.99999999, 1e-6),
+    (lambda_0_9_r2, f64, 0.99, 1e-12),
+    (lambda_0_9_r2, f32, 0.99, 1e-6),
+}
+
+broyden_hybrid_trdg_tests! {
     (lambda_0_9_r4, f64, 0.9999, 1e-12),
     (lambda_0_9_r4, f32, 0.9999, 1e-6),
     (lambda_0_9_r8, f64, 0.99999999, 1e-12),

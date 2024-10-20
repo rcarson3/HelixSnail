@@ -203,7 +203,7 @@ pub fn upper_tri_mat_t_vec_mult<const NDIM: usize, const MDIM: usize, F>(
         prod[i_n] = F::zero();
         // M_ji * a_j = p_i
         // Only go down to diagonal
-        for j_m in 0..i_n {
+        for j_m in 0..(i_n + 1) {
             prod[i_n] += matrix[j_m][i_n] * vec[j_m];
         }
     }

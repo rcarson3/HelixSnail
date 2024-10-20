@@ -1,27 +1,26 @@
 // use log::error;
 use core::result::Result;
-use crate::linear_algebra::math::*;
 
 // Need to add an actual QR solver in here at some point. It currently contains just QR factorization functions
 
 // Algorithm taken from Matrix Computation 4th ed. by GH Golub and CF Van Loan
 // pg. 236 alg. 5.1.1
-pub fn householder_vector<const NDIM: usize, F>(
+pub fn householder_vector<F>(
+    length: usize,
     x: &[F],
     nu: &mut [F],
 ) -> F
 where
     F: crate::FloatType,
-    [(); NDIM - 1]: Sized,
 {
-    assert!(x.len() >= NDIM);
-    assert!(nu.len() >= NDIM);
-    let sigma: F;
+    assert!(x.len() >= length);
+    assert!(nu.len() >= length);
+    let mut sigma: F = F::zero();
     let beta: F;
 
-    sigma = dot_prod::<{NDIM - 1}, F>(&x[1..], &x[1..]);
     nu[0] = F::one();
-    for i in 1..NDIM {
+    for i in 1..length {
+        sigma += x[i] * x[i];
         nu[i] = x[i];
     }
 
@@ -46,7 +45,7 @@ where
         beta = (F::from(2.0).unwrap() * nu[0] * nu[0]) / (sigma + nu[0] * nu[0]);
         let inu0: F = F::one() / nu[0];
         nu[0] = F::one();
-        for i in 1..NDIM {
+        for i in 1..length {
             nu[i] *= inu0;
         }
     }
@@ -81,7 +80,7 @@ where
         q_matrix[i][i] = F::one();
     }
 
-    for i in (0..(NDIM - 1)).rev() {
+    for i in (0..NDIM).rev() {
         // Initialize nu and nu_Q_T
         for j in 0..(NDIM - i) {
             nu[j] = matrix_factor[j + i][i];
@@ -140,7 +139,7 @@ where
         }
         // work_arrary_1 is the beta values
         // work_array_2 are the nu vector which have length m - i
-        work_array1[i] = householder_vector::<NDIM, F>(&work_array3, work_array2);
+        work_array1[i] = householder_vector::<F>(NDIM - i, &work_array3, work_array2);
         // work_array_3 will now contain the product nu.T * matrix[i:m, i:n]
         // It has dimensions of 1 x n
         for j in 0..(NDIM - i) {
@@ -189,7 +188,7 @@ where
 
     let tolerance: F = F::from(1e-35).unwrap();
 
-    for i in (0..(NDIM - 1)).rev() {
+    for i in (0..NDIM).rev() {
         let rmat_val = r_matrix[i][i];
         if F::abs(rmat_val) < tolerance {
             return Err(crate::helix_error::SolverError::AlgorithmFailure);

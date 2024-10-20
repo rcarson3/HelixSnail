@@ -135,7 +135,7 @@ where
     }
 
     fn solve_initialization(&mut self, residual: &mut [F])->Result<(), crate::helix_error::SolverError> {
-        assert!(residual.len() > NP::NDIM);
+        assert!(residual.len() >= NP::NDIM);
 
         self.converged = false;
         self.function_evals = 0;
@@ -331,13 +331,7 @@ where
                 }
 
                 // compute the qr factorization of the updated jacobian
-                // self.rank1_update(delta_x, grad, jacobian, q_matrix, qtf, newton_raphson_step)?;
-                // bool singular = false;
-                // this->rank1_update(delx, grad, Jacobian, Q, qtf, nrStep, singular);
-                // if (singular) {
-                //     m_status = algFailure;
-                //     return m_status;
-                // }
+                self.rank1_update(delta_x, grad, jacobian, q_matrix, qtf, newton_raphson_step)?;
             }
 
             l2_error_0 = self.l2_error;
@@ -387,7 +381,7 @@ where
 
         // Rotate the vector (Q^T * f_{i+1} - Q^T * f_i - R * \Delta x) into a multiple of the n-th unit vector in
         // such a way that a spike is introduced into (R * \Delta x + Q^T * f_i)
-        for i in (0..(NP::NDIM - 2)).rev() {
+        for i in (0..(NP::NDIM - 1)).rev() {
             residual_vector[i] = F::zero();
             if delta_residual_vector_n1 != F::zero() {
                 // Determine a givens rotation which eliminates the information
