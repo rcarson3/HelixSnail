@@ -22,7 +22,7 @@ use log::info;
 pub struct HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F> + Sized,
+    NP: NonlinearNDProblem<F> + Sized,
     [(); NP::NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
@@ -65,7 +65,7 @@ where
 impl<'a, F, NP> HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM - 1]: Sized,
     [(); NP::NDIM]: Sized,
     [(); NP::NDIM + 1]: Sized,
@@ -141,7 +141,7 @@ where
         self.function_evals = 0;
         self.jacobian_evals = 0;
 
-        let resid_jacob_success = NonlinearSolver::compute_residual(self,residual);
+        let resid_jacob_success = NonlinearNDSolver::compute_residual(self,residual);
 
         if !resid_jacob_success {
             return Err(crate::helix_error::SolverError::InitialEvalFailure);
@@ -187,7 +187,7 @@ where
         assert!(delta_x.len() >= NP::NDIM);
 
         let mut jacob_eval = true;
-        let resid_jacob_success = NonlinearSolver::compute_residual_jacobian(self, residual, jacobian);
+        let resid_jacob_success = NonlinearNDSolver::compute_residual_jacobian(self, residual, jacobian);
 
         // If this fails our solver is in trouble and needs to die.
         if !resid_jacob_success {
@@ -247,7 +247,7 @@ where
             );
             reject_previous = false;
 
-            let resid_jacob_success = NonlinearSolver::compute_residual(self, residual);
+            let resid_jacob_success = NonlinearNDSolver::compute_residual(self, residual);
 
             let converged = self.delta_control.update::<{ NP::NDIM }>(
                 residual,
@@ -463,7 +463,7 @@ where
 impl<'a, F, NP> NonlinearSystemSize for HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM]: Sized,
 {
     const NDIM: usize = NP::NDIM;
@@ -473,7 +473,7 @@ impl<'a, F, NP> NonlinearSolver<F>
     for HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM - 1]: Sized,
     [(); NP::NDIM]: Sized,
     [(); NP::NDIM + 1]: Sized,
@@ -534,6 +534,17 @@ where
     fn get_l2_error(&self) -> F {
         self.l2_error
     }
+}
+
+impl<'a, F, NP> NonlinearNDSolver<F>
+    for HybridTRDglSolver<'a, F, NP>
+where
+    F: crate::FloatType,
+    NP: NonlinearNDProblem<F>,
+    [(); NP::NDIM - 1]: Sized,
+    [(); NP::NDIM]: Sized,
+    [(); NP::NDIM + 1]: Sized,
+{
     fn compute_residual_jacobian<const NDIM: usize>(
         &mut self,
         fcn_eval: &mut [F],
@@ -559,81 +570,4 @@ where
         self.crj
             .compute_resid_jacobian(&self.x, fcn_eval, &mut None)
     }
-
 }
-/*
-impl<'a, F, NP> HybridTRDglSolver<'a, F, NP>
-where
-    F: crate::FloatType,
-    NP: NonlinearProblem<F>,
-    [(); NP::NDIM - 1]: Sized,
-    [(); NP::NDIM]: Sized,
-    [(); NP::NDIM + 1]: Sized,
-{
-    fn solve_initialization(&mut self, residual: &mut [F])->Result<(), crate::helix_error::SolverError> {
-        assert!(residual.len() > NP::NDIM);
-
-        self.converged = false;
-        self.function_evals = 0;
-        self.jacobian_evals = 0;
-
-        let success = NonlinearSolver::compute_residual(self,residual);
-
-        if !success {
-            return Err(crate::helix_error::SolverError::InitialEvalFailure);
-        }
-
-        self.l2_error = norm::<{NP::NDIM}, F>(residual);
-
-        if self.logging_level > 0 {
-            info!("Initial residual = {:?}", self.l2_error);
-        }
-
-        self.delta = self.delta_control.get_delta_initial();
-
-        if self.logging_level > 0 {
-            info!("Initial delta = {:?}", self.delta);
-        }
-        
-        // initialize iteration counter and monitors
-        self.num_iterations = 1;
-        self.num_consecutive_f_iterations = 0;
-        self.num_consecutive_s_iterations = 0;
-        self.num_slow_1_iterations = 0;
-        self.num_slow_2_iterations = 0;
-
-        Ok(())
-    }
-
-    fn solve_step(&mut self, 
-                  residual: &mut [F],
-                  jacobian: &mut [[F; NP::NDIM]],
-                  q_matrix: &mut [[F; NP::NDIM]],
-                  qtf: &mut [F],
-                  grad: &mut [F],
-                  newton_raphson_step: &mut [F],
-                  delta_x: &mut [F])->Result<(), crate::helix_error::SolverError>  
-    {
-        let mut jacob_eval = true;
-        let success = NonlinearSolver::compute_residual_jacobian(self, residual, jacobian);
-
-        // If this fails our solver is in trouble and needs to die.
-        if !success {
-            return Err(crate::helix_error::SolverError::EvalFailure);
-        }
-        // Jacobian is our R matrix and Q
-        // could re-use nrstep, grad, and delx given if we're already here than we need to reset our solver
-        // so these arrays can be used as scratch arrays.
-        householder_qr::<{NP::NDIM}, F>(jacobian, q_matrix, grad, newton_raphson_step, delta_x);
-        // Nothing crazy here as qtf = Q^T * residual
-        mat_t_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(q_matrix, residual, qtf);
-        // we're essentially starting over here so we can reset these values
-        let mut reject_previous = false;
-        let mut jacobian_grad_2 = F::zero();
-        // self.l2_error is set initially in solve_initialization
-        // and later on in delta_control.update_delta, so it's always set
-        let mut l2_error_0 = self.l2_error;
-        Ok(())
-    }
-}
-*/

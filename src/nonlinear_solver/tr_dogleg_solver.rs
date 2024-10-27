@@ -13,7 +13,7 @@ use log::info;
 pub struct TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F> + Sized,
+    NP: NonlinearNDProblem<F> + Sized,
     [(); NP::NDIM]: Sized,
 {
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
@@ -48,7 +48,7 @@ where
 impl<'a, F, NP> TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM]: Sized,
 {
     /// The size of the jacobian
@@ -114,7 +114,7 @@ where
 impl<'a, F, NP> NonlinearSystemSize for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM]: Sized,
 {
     const NDIM: usize = NP::NDIM;
@@ -124,7 +124,7 @@ impl<'a, F, NP> NonlinearSolver<F>
     for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
-    NP: NonlinearProblem<F>,
+    NP: NonlinearNDProblem<F>,
     [(); NP::NDIM + 1]: Sized,
 {
     fn setup_options(&mut self, max_iter: usize, tolerance: F, output_level: Option<i32>) {
@@ -161,7 +161,7 @@ where
         let mut residual = [F::zero(); NP::NDIM];
         let mut jacobian = [[F::zero(); NP::NDIM]; NP::NDIM];
 
-        if !self.compute_residual_jacobian(&mut residual, &mut jacobian) {
+        if !NonlinearNDSolver::compute_residual_jacobian(self,&mut residual, &mut jacobian) {
             return Err(crate::helix_error::SolverError::InitialEvalFailure);
         }
 
@@ -213,7 +213,7 @@ where
 
             {
                 let resid_jacob_success =
-                    self.compute_residual_jacobian(&mut residual, &mut jacobian);
+                NonlinearNDSolver::compute_residual_jacobian(self, &mut residual, &mut jacobian);
                 let converged = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
@@ -263,6 +263,15 @@ where
     fn get_l2_error(&self) -> F {
         self.l2_error
     }
+}
+
+impl<'a, F, NP> NonlinearNDSolver<F>
+    for TrustRegionDoglegSolver<'a, F, NP>
+where
+    F: crate::FloatType,
+    NP: NonlinearNDProblem<F>,
+    [(); NP::NDIM + 1]: Sized,
+{
     fn compute_residual_jacobian<const NDIM: usize>(
         &mut self,
         fcn_eval: &mut [F],
@@ -290,5 +299,4 @@ where
         self.crj
             .compute_resid_jacobian(&self.x, fcn_eval, &mut None)
     }
-
 }

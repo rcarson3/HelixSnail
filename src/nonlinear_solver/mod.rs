@@ -7,10 +7,13 @@ pub mod tr_dogleg_solver;
 
 pub mod hybrid_tr_dogleg_solver;
 
+pub mod newton_bb_solver;
+
 pub use self::delta_control::*;
 pub use self::dogleg::*;
 pub use self::tr_dogleg_solver::*;
 pub use self::hybrid_tr_dogleg_solver::*;
+pub use self::newton_bb_solver::*;
 
 pub trait NonlinearSystemSize {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
@@ -63,6 +66,14 @@ where
     /// # Outputs
     /// * l2 norm of the residual of the nonlinear problem
     fn get_l2_error(&self) -> F;
+}
+
+/// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
+/// expect a square system of equations in order to work.
+pub trait NonlinearNDSolver<F> : NonlinearSolver<F>
+where
+    F: crate::FloatType,
+{
     /// Computes the residual and jacobian of the nonlinear problem
     ///
     /// # Arguments
@@ -92,8 +103,43 @@ where
     ) -> bool;
 }
 
+/// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
+/// expect a square system of equations in order to work.
+pub trait Nonlinear1DSolver<F> : NonlinearSolver<F>
+where
+    F: crate::FloatType,
+{
+    /// Computes the residual and jacobian of the nonlinear problem
+    ///
+    /// # Arguments
+    /// * `fcn_eval` - the residual / function evaluation of the nonlinear problem
+    /// * `jacobian` - the derivative of the residual with respect to the solution variable
+    ///
+    /// # Outputs
+    /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
+    /// Note that nightly currently isn't flexible enough for us to have this be jacobian: &mut [[F; Self::NDIM]]
+    /// so we revert to this instead... where NDIM = Self::NDIM in practice
+    fn compute_residual_jacobian(
+        &mut self,
+        fcn_eval: &mut F,
+        jacobian: &mut F,
+    ) -> bool;
+
+    /// Computes the residual and jacobian of the nonlinear problem
+    ///
+    /// # Arguments
+    /// * `fcn_eval` - the residual / function evaluation of the nonlinear problem
+    ///
+    /// # Outputs
+    /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
+    fn compute_residual(
+        &mut self,
+        fcn_eval: &mut F
+    ) -> bool;
+}
+
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
-pub trait NonlinearProblem<F> : NonlinearSystemSize
+pub trait NonlinearNDProblem<F> : NonlinearSystemSize
 where
     F: crate::FloatType,
 {
@@ -114,5 +160,30 @@ where
         x: &[F],
         fcn_eval: &mut [F],
         opt_jacobian: &mut Option<&mut [F]>,
+    ) -> bool;
+}
+
+/// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
+pub trait Nonlinear1DProblem<F> : NonlinearSystemSize
+where
+    F: crate::FloatType,
+{
+    /// This function at a minimum computes the residual / function evaluation of the system of nonlinear equations
+    /// that we are solving for. It is expected that fcn_eval and opt_jacobian have been scaled such that the solution
+    /// variable x nominally remains in the neighborhood of [-1, 1] as this provides better numerical stability of
+    /// the solution.
+    ///
+    /// # Arguments
+    /// * fcn_eval - the residual / function evaluation of the nonlinear problem: size NDIM
+    /// * opt_jacobian - (Optional) the derivative of the residual with respect to the solution variable: size NDIM * NDIM
+    ///                   For the solvers within this library, it is expected that jacobian is provided back to us if we pass in a slice
+    ///                   as we don't make use of finite difference methods to estimate the jacobian.
+    /// Note that nightly currently isn't flexible enough for us to have this be jacobian: Option(&mut [[F; Self::NDIM]])
+    /// so we revert to this instead... where NDIM = Self::NDIM in practice
+    fn compute_resid_jacobian(
+        &mut self,
+        x: &F,
+        fcn_eval: &mut F,
+        opt_jacobian: &mut Option<&mut F>,
     ) -> bool;
 }

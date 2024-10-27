@@ -48,7 +48,7 @@ where
     const NDIM: usize = 8;
 }
 
-impl<F> NonlinearProblem<F> for Broyden<F>
+impl<F> NonlinearNDProblem<F> for Broyden<F>
 where
     F: helix_snail::FloatType,
     [(); Self::NDIM]:

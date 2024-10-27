@@ -28,6 +28,8 @@ pub enum SolverError {
     Unset,
     /// A small pivot aka a row nominally full of zeros caused the solver to fail
     SmallPivot,
+    /// Solver was not able to successfully bracket bounds
+    BracketFailure,
     #[doc(hidden)]
     __NonExhaustive(private::Private),
 }
@@ -52,6 +54,10 @@ impl Display for SolverError {
             SolverError::SmallPivot => write!(
                 f,
                 "Linear solver was not able to pivot due to an entire row being almost 0"
+            ),
+            SolverError::BracketFailure => write!(
+                f,
+                "Solver was not able to successfully bracket bounds"
             ),
             SolverError::__NonExhaustive(_) => unreachable!(),
         }
