@@ -111,7 +111,7 @@ where
     }
 }
 
-impl<'a, F, NP> NonlinearSystemSize for TrustRegionDoglegSolver<'a, F, NP>
+impl<F, NP> NonlinearSystemSize for TrustRegionDoglegSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -120,7 +120,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
+impl<F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -132,18 +132,10 @@ where
         self.max_iterations = max_iter;
         self.solution_tolerance = tolerance;
 
-        self.logging_level = if let Some(output) = output_level {
-            output
-        } else {
-            0
-        };
+        self.logging_level = output_level.unwrap_or_default();
     }
     fn set_logging_level(&mut self, output_level: Option<i32>) {
-        self.logging_level = if let Some(output) = output_level {
-            output
-        } else {
-            0
-        };
+        self.logging_level = output_level.unwrap_or_default();
     }
     fn solve(&mut self) -> Result<(), crate::helix_error::SolverError> {
         self.converged = false;
@@ -274,7 +266,7 @@ where
     }
 }
 
-impl<'a, F, NP> NonlinearNDSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
+impl<F, NP> NonlinearNDSolver<F> for TrustRegionDoglegSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,

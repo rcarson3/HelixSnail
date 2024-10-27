@@ -3,6 +3,7 @@
 use crate::linear_algebra::dot_prod;
 
 /// The dogleg is an approach to solving the update step of a nonlinear system of equations.
+///
 /// It is originally described in:
 /// M.J.D. Powell, “A new algorithm for unconstrained optimization”, in:
 /// J.B. Rosen, O.L. Mangasarian, and K. Ritter, eds., Nonlinear programming (Academic Press, New York, 1970).

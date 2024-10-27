@@ -190,7 +190,7 @@ where
             }
             *delta_x = -jacob / *func;
             *delta *= bound_step_growth_factor;
-            return false;
+            false
         };
 
         for i in 0..self.max_iterations {
@@ -256,7 +256,7 @@ where
     }
 }
 
-impl<'a, F, NP> NonlinearSystemSize for NewtonBisectionBracketedSolver<'a, F, NP>
+impl<F, NP> NonlinearSystemSize for NewtonBisectionBracketedSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -264,7 +264,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<'a, F, NP> NonlinearSolver<F> for NewtonBisectionBracketedSolver<'a, F, NP>
+impl<F, NP> NonlinearSolver<F> for NewtonBisectionBracketedSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -276,18 +276,10 @@ where
         self.solution_tolerance = tolerance;
         self.x_tolerance = tolerance * F::from(1e-4).unwrap();
 
-        self.logging_level = if let Some(output) = output_level {
-            output
-        } else {
-            0
-        };
+        self.logging_level = output_level.unwrap_or_default();
     }
     fn set_logging_level(&mut self, output_level: Option<i32>) {
-        self.logging_level = if let Some(output) = output_level {
-            output
-        } else {
-            0
-        };
+        self.logging_level = output_level.unwrap_or_default();
     }
 
     fn solve(&mut self) -> Result<(), crate::helix_error::SolverError> {
@@ -429,7 +421,7 @@ where
                 self.x_upper = self.x;
             }
         }
-        return Err(crate::helix_error::SolverError::UnconvergedMaxIter);
+        Err(crate::helix_error::SolverError::UnconvergedMaxIter)
     }
     fn get_num_fcn_evals(&self) -> usize {
         self.function_evals
@@ -448,7 +440,7 @@ where
     }
 }
 
-impl<'a, F, NP> Nonlinear1DSolver<F> for NewtonBisectionBracketedSolver<'a, F, NP>
+impl<F, NP> Nonlinear1DSolver<F> for NewtonBisectionBracketedSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,

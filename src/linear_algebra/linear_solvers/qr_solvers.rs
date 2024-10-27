@@ -131,7 +131,7 @@ pub fn householder_qr<const NDIM: usize, F>(
         }
         // work_arrary_1 is the beta values
         // work_array_2 are the nu vector which have length m - i
-        work_array1[i] = householder_vector::<F>(NDIM - i, &work_array3, work_array2);
+        work_array1[i] = householder_vector::<F>(NDIM - i, work_array3, work_array2);
         // work_array_3 will now contain the product nu.T * matrix[i:m, i:n]
         // It has dimensions of 1 x n
         for j in 0..(NDIM - i) {
@@ -162,7 +162,7 @@ pub fn householder_qr<const NDIM: usize, F>(
 
     // Now back out the Q array. Although, we could maybe do this inline with the above
     // if we thought about this a bit more.
-    householder_q_matrix(matrix_factor, &work_array1, q_matrix);
+    householder_q_matrix(matrix_factor, work_array1, q_matrix);
 }
 
 pub fn qr_solve<const NDIM: usize, F>(
