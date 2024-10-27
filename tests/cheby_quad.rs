@@ -6,13 +6,13 @@ extern crate num_traits as libnum;
 
 use core::marker::PhantomData;
 use helix_snail::nonlinear_solver::*;
-use log::{warn, info};
+use log::{info, warn};
 // Making use of past here makes it slightly nicer to write the necessary test macro
 use paste::paste;
 
 const LOGGING_LEVEL: i32 = 1;
 
-// This problem is described originally in 
+// This problem is described originally in
 // Fletcher, R. "Function minimization without evaluating derivatives - a review." The Computer Journal 8.1 (1965): 33-41.
 // doi: https://doi.org/10.1093/comjnl/8.1.33
 // It's original description in the Fletcher paper is a function that "represents those found in practice".
@@ -33,7 +33,7 @@ where
 impl<F, const NDIMI: usize> NonlinearNDProblem<F> for ChebyQuad<F, NDIMI>
 where
     F: helix_snail::FloatType,
-    [(); Self::NDIM]:
+    [(); Self::NDIM]:,
 {
     fn compute_resid_jacobian(
         &mut self,
@@ -52,7 +52,7 @@ where
         let mut tk = F::zero();
         let mut temp3 = F::zero();
         let mut temp4 = F::zero();
-    
+
         for i in 0..Self::NDIM {
             fcn_eval[i] = F::zero();
         }
@@ -77,15 +77,18 @@ where
             fcn_eval[i] *= tk;
             if iev {
                 d1 = F::from(i).unwrap() + F::one();
-                fcn_eval[i] += F::one() / (d1 * d1 - F::one()); 
+                fcn_eval[i] += F::one() / (d1 * d1 - F::one());
             }
             iev = !iev;
-
         }
 
         if let Some(jac) = opt_jacobian {
-            assert!(jac.len() >= Self::NDIM * Self::NDIM, "length {:?}", jac.len());
-            let jacobian = helix_snail::array1d_to_array2d_mut::<{Self::NDIM}, F>(jac);
+            assert!(
+                jac.len() >= Self::NDIM * Self::NDIM,
+                "length {:?}",
+                jac.len()
+            );
+            let jacobian = helix_snail::array1d_to_array2d_mut::<{ Self::NDIM }, F>(jac);
             for i in 0..Self::NDIM {
                 temp1 = F::one();
                 temp2 = F::from(2.0).unwrap() * x[i] - F::one();

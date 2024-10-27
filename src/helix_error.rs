@@ -55,10 +55,9 @@ impl Display for SolverError {
                 f,
                 "Linear solver was not able to pivot due to an entire row being almost 0"
             ),
-            SolverError::BracketFailure => write!(
-                f,
-                "Solver was not able to successfully bracket bounds"
-            ),
+            SolverError::BracketFailure => {
+                write!(f, "Solver was not able to successfully bracket bounds")
+            }
             SolverError::__NonExhaustive(_) => unreachable!(),
         }
     }

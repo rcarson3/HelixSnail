@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use crate::linear_algebra::{qr_solve, householder_qr, make_givens, norm, dot_prod, mat_t_vec_mult, upper_tri_mat_t_vec_mult, upper_tri_mat_vec_mult, };
+use crate::linear_algebra::{
+    dot_prod, householder_qr, make_givens, mat_t_vec_mult, norm, qr_solve,
+    upper_tri_mat_t_vec_mult, upper_tri_mat_vec_mult,
+};
 use crate::nonlinear_solver::*;
 
 use core::result::Result;
@@ -16,7 +19,7 @@ use log::info;
 // Method is inspired by SNLS current trust region dogleg solver, Powell's original hybrid method for
 // nonlinear equations, and MINPACK's modified version of it.
 // Powell's original hybrid method can be found at:
-// M. J. D. Powell, "A hybrid method for nonlinear equations", in Numerical methods for nonlinear algebraic equations, 
+// M. J. D. Powell, "A hybrid method for nonlinear equations", in Numerical methods for nonlinear algebraic equations,
 // Philip Rabinowitz, editor, chapter 6, pages 87-114, Gordon and Breach Science Publishers, New York, 1970.
 // MINPACK's user guide is found at https://doi.org/10.2172/6997568
 pub struct HybridTRDglSolver<'a, F, NP>
@@ -118,7 +121,7 @@ where
         [(); NP::NDIM + 1]: Sized,
     {
         assert!(x.len() >= NP::NDIM);
-        qr_solve::<{NP::NDIM}, F>(r_matrix, func, x)?;
+        qr_solve::<{ NP::NDIM }, F>(r_matrix, func, x)?;
         for i in 0..NP::NDIM {
             x[i] *= -F::one();
         }
@@ -134,20 +137,23 @@ where
         }
     }
 
-    fn solve_initialization(&mut self, residual: &mut [F])->Result<(), crate::helix_error::SolverError> {
+    fn solve_initialization(
+        &mut self,
+        residual: &mut [F],
+    ) -> Result<(), crate::helix_error::SolverError> {
         assert!(residual.len() >= NP::NDIM);
 
         self.converged = false;
         self.function_evals = 0;
         self.jacobian_evals = 0;
 
-        let resid_jacob_success = NonlinearNDSolver::compute_residual(self,residual);
+        let resid_jacob_success = NonlinearNDSolver::compute_residual(self, residual);
 
         if !resid_jacob_success {
             return Err(crate::helix_error::SolverError::InitialEvalFailure);
         }
 
-        self.l2_error = norm::<{NP::NDIM}, F>(residual);
+        self.l2_error = norm::<{ NP::NDIM }, F>(residual);
 
         if self.logging_level > 0 {
             info!("Initial residual = {:?}", self.l2_error);
@@ -158,7 +164,7 @@ where
         if self.logging_level > 0 {
             info!("Initial delta = {:?}", self.delta);
         }
-        
+
         // initialize iteration counter and monitors
         self.num_iterations = 1;
         self.num_consecutive_f_iterations = 0;
@@ -169,15 +175,16 @@ where
         Ok(())
     }
 
-    fn solve_step(&mut self, 
-                  residual: &mut [F],
-                  jacobian: &mut [[F; NP::NDIM]],
-                  q_matrix: &mut [[F; NP::NDIM]],
-                  qtf: &mut [F],
-                  grad: &mut [F],
-                  newton_raphson_step: &mut [F],
-                  delta_x: &mut [F])->Result<(), crate::helix_error::SolverError>  
-    {
+    fn solve_step(
+        &mut self,
+        residual: &mut [F],
+        jacobian: &mut [[F; NP::NDIM]],
+        q_matrix: &mut [[F; NP::NDIM]],
+        qtf: &mut [F],
+        grad: &mut [F],
+        newton_raphson_step: &mut [F],
+        delta_x: &mut [F],
+    ) -> Result<(), crate::helix_error::SolverError> {
         assert!(residual.len() >= NP::NDIM);
         assert!(jacobian.len() >= NP::NDIM);
         assert!(q_matrix.len() >= NP::NDIM);
@@ -187,7 +194,8 @@ where
         assert!(delta_x.len() >= NP::NDIM);
 
         let mut jacob_eval = true;
-        let resid_jacob_success = NonlinearNDSolver::compute_residual_jacobian(self, residual, jacobian);
+        let resid_jacob_success =
+            NonlinearNDSolver::compute_residual_jacobian(self, residual, jacobian);
 
         // If this fails our solver is in trouble and needs to die.
         if !resid_jacob_success {
@@ -196,9 +204,9 @@ where
         // Jacobian is our R matrix and Q
         // could re-use nrstep, grad, and delx given if we're already here than we need to reset our solver
         // so these arrays can be used as scratch arrays.
-        householder_qr::<{NP::NDIM}, F>(jacobian, q_matrix, grad, newton_raphson_step, delta_x);
+        householder_qr::<{ NP::NDIM }, F>(jacobian, q_matrix, grad, newton_raphson_step, delta_x);
         // Nothing crazy here as qtf = Q^T * residual
-        mat_t_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(q_matrix, residual, qtf);
+        mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(q_matrix, residual, qtf);
         // we're essentially starting over here so we can reset these values
         let mut reject_previous = false;
         let mut jacob_grad_2 = F::zero();
@@ -213,11 +221,13 @@ where
                 // So the LU solve does things in-place which causes issues when calculating the grad term...
                 // So, we need to pull this out and perform this operation first
                 // R^T * Q^T * f
-                upper_tri_mat_t_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(jacobian, qtf, grad);
+                upper_tri_mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(jacobian, qtf, grad);
                 {
                     let mut temp = [F::zero(); NP::NDIM];
-                    upper_tri_mat_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(jacobian, grad, &mut temp);
-                    jacob_grad_2 = dot_prod::<{NP::NDIM}, F>(&temp, &temp);
+                    upper_tri_mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(
+                        jacobian, grad, &mut temp,
+                    );
+                    jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
                 }
                 // R x = Q^T f solve
                 // If R is signular we fail out of the solve with an error on the CPU
@@ -229,7 +239,7 @@ where
 
             let mut use_newton_raphson = false;
             // If the step was rejected nrStep will be the same value as previously, and so we can just recalculate nr_norm here.
-            let newton_raphson_l2_norm = norm::<{NP::NDIM}, F>(newton_raphson_step);
+            let newton_raphson_l2_norm = norm::<{ NP::NDIM }, F>(newton_raphson_step);
 
             let mut predicted_residual = F::one();
             // computes the updated delta x, predicated residual error, and whether or not NR method was used.
@@ -282,14 +292,27 @@ where
             let actual_reduction = F::one() - self.l2_error / l2_error_0;
             // Delta has been updated from a bounds already
             // Check to see if we need to recalculate jacobian
-            self.num_consecutive_f_iterations = if self.rho_last < F::from(0.1).unwrap() { self.num_consecutive_f_iterations + 1} else { 0 };
+            self.num_consecutive_f_iterations = if self.rho_last < F::from(0.1).unwrap() {
+                self.num_consecutive_f_iterations + 1
+            } else {
+                0
+            };
             if self.num_consecutive_f_iterations == 2 {
-                return Ok(())
+                return Ok(());
             }
 
             // Determine the progress of the iteration
-            self.num_slow_1_iterations = if actual_reduction >= F::from(0.001).unwrap() { 0 } else { self.num_slow_1_iterations + 1 };
-            self.num_slow_2_iterations = if jacob_eval && (actual_reduction < F::from(0.1).unwrap()) { self.num_slow_2_iterations + 1 } else { 0 };
+            self.num_slow_1_iterations = if actual_reduction >= F::from(0.001).unwrap() {
+                0
+            } else {
+                self.num_slow_1_iterations + 1
+            };
+            self.num_slow_2_iterations = if jacob_eval && (actual_reduction < F::from(0.1).unwrap())
+            {
+                self.num_slow_2_iterations + 1
+            } else {
+                0
+            };
 
             // Tests for termination and stringent tolerances
             if self.num_slow_2_iterations == 5 {
@@ -300,27 +323,30 @@ where
             }
 
             // Only calculate this if solution wasn't rejected
-            if !reject_previous 
-            {
+            if !reject_previous {
                 // Here we can use delx, nrStep, and grad as working arrays as we're just going
                 // to rewrite them in a second...
                 // nrStep = (R * delx + Q^T * f_i)
-                upper_tri_mat_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(jacobian, delta_x, newton_raphson_step);
+                upper_tri_mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(
+                    jacobian,
+                    delta_x,
+                    newton_raphson_step,
+                );
                 for i in 0..NP::NDIM {
                     // work_arr3 = R \Delta x + Q^T F
                     // where F here is our residual vector
-                    newton_raphson_step[i] += qtf[i];                    
+                    newton_raphson_step[i] += qtf[i];
                 }
                 // calculate the rank one modification to the jacobian
                 // and update qtf if necessary
                 {
                     // delx = delx / ||delx||_L2
-                    let inv_delta_x_norm = F::one() / norm::<{NP::NDIM}, F>(delta_x);
+                    let inv_delta_x_norm = F::one() / norm::<{ NP::NDIM }, F>(delta_x);
                     for i in 0..NP::NDIM {
                         delta_x[i] *= inv_delta_x_norm;
                     }
 
-                    mat_t_vec_mult::<{NP::NDIM}, {NP::NDIM}, F>(&q_matrix, residual, grad);
+                    mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&q_matrix, residual, grad);
 
                     // Update qtf value first and then we can update the gradient term
                     // grad = (Q^T * f_{i+1} - Q^T * f_i - R * delx)
@@ -346,27 +372,26 @@ where
         Ok(())
     }
 
-        // This performs a Broyden Rank-1 style update for Q, R and Q^T f
+    // This performs a Broyden Rank-1 style update for Q, R and Q^T f
     // This version has origins in this paper:
     // Gill, Philip E., et al. "Methods for modifying matrix factorizations." Mathematics of computation 28.126 (1974): 505-535.
     // However, you can generally find it described in more approachable manners elsewhere on the internet
-    // 
+    //
     // The Broyden update method is described in:
     // Broyden, Charles G. "A class of methods for solving nonlinear simultaneous equations." Mathematics of computation 19.92 (1965): 577-593.
     // Additional resources that might  be of interest are:
     // Chapter 8 of https://doi.org/10.1137/1.9781611971200.ch8
     // or the pseudo-algorithms / code for how to update things in
     // Appendix A of https://doi.org/10.1137/1.9781611971200.appa
-    fn rank1_update(&mut self,
-                    delta_x_normalized: &[F], // delta x / || delta_x||_L2
-                    delta_residual_vector: &[F], // (Q^T * f_{i+1} - Q^T * f_i - R * \Delta x)
-                    r_matrix: &mut [[F; NP::NDIM]],
-                    q_matrix: &mut [[F; NP::NDIM]],
-                    qtf: &mut [F],
-                    residual_vector: &mut [F], // (R * \Delta x + Q^T * f_i)
-    ) -> Result<(), crate::helix_error::SolverError>
-    {
-
+    fn rank1_update(
+        &mut self,
+        delta_x_normalized: &[F],    // delta x / || delta_x||_L2
+        delta_residual_vector: &[F], // (Q^T * f_{i+1} - Q^T * f_i - R * \Delta x)
+        r_matrix: &mut [[F; NP::NDIM]],
+        q_matrix: &mut [[F; NP::NDIM]],
+        qtf: &mut [F],
+        residual_vector: &mut [F], // (R * \Delta x + Q^T * f_i)
+    ) -> Result<(), crate::helix_error::SolverError> {
         assert!(delta_x_normalized.len() >= NP::NDIM);
         assert!(delta_residual_vector.len() >= NP::NDIM);
         assert!(r_matrix.len() >= NP::NDIM);
@@ -374,8 +399,8 @@ where
         assert!(qtf.len() >= NP::NDIM);
         assert!(residual_vector.len() >= NP::NDIM);
 
-        let ndim1 = NP::NDIM - 1; 
-        residual_vector[ndim1] = r_matrix[ndim1][ndim1]; 
+        let ndim1 = NP::NDIM - 1;
+        residual_vector[ndim1] = r_matrix[ndim1][ndim1];
         let mut delta_residual_vector_n1 = delta_residual_vector[ndim1];
         let mut givens = [F::zero(); 2];
 
@@ -386,18 +411,23 @@ where
             if delta_residual_vector_n1 != F::zero() {
                 // Determine a givens rotation which eliminates the information
                 // necessary to recover the givens rotation
-                make_givens(-delta_residual_vector_n1, delta_residual_vector[i], &mut givens);
-                delta_residual_vector_n1 = givens[1] * delta_residual_vector[i] + givens[0] * delta_residual_vector_n1;
+                make_givens(
+                    -delta_residual_vector_n1,
+                    delta_residual_vector[i],
+                    &mut givens,
+                );
+                delta_residual_vector_n1 =
+                    givens[1] * delta_residual_vector[i] + givens[0] * delta_residual_vector_n1;
                 // Apply the transformation to R and extend the spike in (R * \Delta x + Q^T * f_i)
                 for j in i..NP::NDIM {
                     let rmat_val = givens[0] * r_matrix[i][j] - givens[1] * residual_vector[j];
-                    residual_vector[j] = givens[1] * r_matrix[i][j] + givens[0] * residual_vector[j];
+                    residual_vector[j] =
+                        givens[1] * r_matrix[i][j] + givens[0] * residual_vector[j];
                     r_matrix[i][j] = rmat_val;
                 }
-            }
-            else {
+            } else {
                 givens[0] = F::one();
-                givens[1] = F::zero(); 
+                givens[1] = F::zero();
             }
 
             // 1st updates of Q and Q^T f
@@ -408,10 +438,10 @@ where
             }
 
             {
-                let qtf_val= givens[0] * qtf[i] - givens[1] * qtf[ndim1];
+                let qtf_val = givens[0] * qtf[i] - givens[1] * qtf[ndim1];
                 qtf[ndim1] = givens[1] * qtf[i] + givens[0] * qtf[ndim1];
                 qtf[i] = qtf_val;
-            } 
+            }
         }
 
         // Add the spike from the Rank-1 update to (R * \Delta x + Q^T * f_i)
@@ -427,11 +457,11 @@ where
                 // Apply the transformation to R and reduce the spike in (R * \Delta x + Q^T * f_i)
                 for j in i..NP::NDIM {
                     let rmat_val = givens[0] * r_matrix[i][j] + givens[1] * residual_vector[j];
-                    residual_vector[j] = -givens[1] * r_matrix[i][j] + givens[0] * residual_vector[j];
+                    residual_vector[j] =
+                        -givens[1] * r_matrix[i][j] + givens[0] * residual_vector[j];
                     r_matrix[i][j] = rmat_val;
                 }
-            }
-            else {
+            } else {
                 givens[0] = F::one();
                 givens[1] = F::zero();
             }
@@ -469,8 +499,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<'a, F, NP> NonlinearSolver<F>
-    for HybridTRDglSolver<'a, F, NP>
+impl<'a, F, NP> NonlinearSolver<F> for HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -503,16 +532,27 @@ where
 
         // Working arrays
         let mut q_matrix = [[F::zero(); NP::NDIM]; NP::NDIM];
-        let mut work_array_1= [F::zero(); NP::NDIM];
-        let mut work_array_2= [F::zero(); NP::NDIM];
-        let mut work_array_3= [F::zero(); NP::NDIM];
-        let mut qtf= [F::zero(); NP::NDIM];
+        let mut work_array_1 = [F::zero(); NP::NDIM];
+        let mut work_array_2 = [F::zero(); NP::NDIM];
+        let mut work_array_3 = [F::zero(); NP::NDIM];
+        let mut qtf = [F::zero(); NP::NDIM];
 
         // Do initial solver checks
         self.solve_initialization(&mut residual)?;
         // Run our solver until it converges or fails
-        while !self.converged && (self.num_iterations < self.max_iterations) && (self.function_evals < self.max_iterations) {
-            self.solve_step(&mut residual, &mut jacobian, &mut q_matrix, &mut qtf, &mut work_array_1, &mut work_array_2, &mut work_array_3)?;
+        while !self.converged
+            && (self.num_iterations < self.max_iterations)
+            && (self.function_evals < self.max_iterations)
+        {
+            self.solve_step(
+                &mut residual,
+                &mut jacobian,
+                &mut q_matrix,
+                &mut qtf,
+                &mut work_array_1,
+                &mut work_array_2,
+                &mut work_array_3,
+            )?;
         }
 
         if !self.converged {
@@ -539,8 +579,7 @@ where
     }
 }
 
-impl<'a, F, NP> NonlinearNDSolver<F>
-    for HybridTRDglSolver<'a, F, NP>
+impl<'a, F, NP> NonlinearNDSolver<F> for HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -565,12 +604,8 @@ where
             .compute_resid_jacobian(&self.x, fcn_eval, Some(jac))
     }
 
-    fn compute_residual(
-        &mut self,
-        fcn_eval: &mut [F],
-    ) -> bool {
+    fn compute_residual(&mut self, fcn_eval: &mut [F]) -> bool {
         self.function_evals += 1;
-        self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, None)
+        self.crj.compute_resid_jacobian(&self.x, fcn_eval, None)
     }
 }

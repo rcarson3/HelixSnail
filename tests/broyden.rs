@@ -47,7 +47,7 @@ where
 impl<F> NonlinearNDProblem<F> for Broyden<F>
 where
     F: helix_snail::FloatType,
-    [(); Self::NDIM]:
+    [(); Self::NDIM]:,
 {
     fn compute_resid_jacobian(
         &mut self,
@@ -80,8 +80,12 @@ where
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
         if let Some(jac) = opt_jacobian {
-            assert!(jac.len() >= Self::NDIM * Self::NDIM, "length {:?}", jac.len());
-            let jacobian = helix_snail::array1d_to_array2d_mut::<{Self::NDIM}, F>(jac);
+            assert!(
+                jac.len() >= Self::NDIM * Self::NDIM,
+                "length {:?}",
+                jac.len()
+            );
+            let jacobian = helix_snail::array1d_to_array2d_mut::<{ Self::NDIM }, F>(jac);
 
             // zero things out first
             for item in jacobian.iter_mut().take(Self::NDIM) {
@@ -242,12 +246,11 @@ broyden_hybrid_trdg_tests! {
     (lambda_0_9_r2, f32, 0.99, 1e-6),
 }
 
-
 fn array_trials<const NDIM: usize, F>(vec: &[F]) -> &[F]
 where
     F: helix_snail::FloatType,
 {
-    let mat = helix_snail::array1d_to_array2d::<{NDIM}, F>(vec);
+    let mat = helix_snail::array1d_to_array2d::<{ NDIM }, F>(vec);
     helix_snail::array2d_to_array1d(mat)
 }
 
@@ -255,12 +258,11 @@ fn array_trials2<const NDIM: usize, F>(vec: &mut [F]) -> &mut [[F; NDIM]]
 where
     F: helix_snail::FloatType,
 {
-    helix_snail::array1d_to_array2d_mut::<{NDIM}, F>(vec)
+    helix_snail::array1d_to_array2d_mut::<{ NDIM }, F>(vec)
 }
 
 #[test]
-fn array_trial_f64()
-{
+fn array_trial_f64() {
     const NDIM: usize = 12;
     let mut vec = [0.0_f64; NDIM];
     for i in 0..NDIM {
@@ -276,4 +278,3 @@ fn array_trial_f64()
     vec[11] = 11.0;
     assert!(vec[11] == 11.0);
 }
-

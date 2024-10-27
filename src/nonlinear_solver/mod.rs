@@ -11,9 +11,9 @@ pub mod newton_bb_solver;
 
 pub use self::delta_control::*;
 pub use self::dogleg::*;
-pub use self::tr_dogleg_solver::*;
 pub use self::hybrid_tr_dogleg_solver::*;
 pub use self::newton_bb_solver::*;
+pub use self::tr_dogleg_solver::*;
 
 pub trait NonlinearSystemSize {
     /// Size of nonlinear system of equations which should be consistent with nonlinear problem
@@ -22,7 +22,7 @@ pub trait NonlinearSystemSize {
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
-pub trait NonlinearSolver<F> : NonlinearSystemSize
+pub trait NonlinearSolver<F>: NonlinearSystemSize
 where
     F: crate::FloatType,
 {
@@ -75,7 +75,7 @@ where
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
-pub trait NonlinearNDSolver<F> : NonlinearSolver<F>
+pub trait NonlinearNDSolver<F>: NonlinearSolver<F>
 where
     F: crate::FloatType,
 {
@@ -102,15 +102,12 @@ where
     ///
     /// # Outputs
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
-    fn compute_residual(
-        &mut self,
-        fcn_eval: &mut [F]
-    ) -> bool;
+    fn compute_residual(&mut self, fcn_eval: &mut [F]) -> bool;
 }
 
 /// Nonlinear Solver trait which contains functions that should be shared between solvers. These solvers currently
 /// expect a square system of equations in order to work.
-pub trait Nonlinear1DSolver<F> : NonlinearSolver<F>
+pub trait Nonlinear1DSolver<F>: NonlinearSolver<F>
 where
     F: crate::FloatType,
 {
@@ -124,11 +121,7 @@ where
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
     /// Note that nightly currently isn't flexible enough for us to have this be jacobian: &mut [[F; Self::NDIM]]
     /// so we revert to this instead... where NDIM = Self::NDIM in practice
-    fn compute_residual_jacobian(
-        &mut self,
-        fcn_eval: &mut F,
-        jacobian: &mut F,
-    ) -> bool;
+    fn compute_residual_jacobian(&mut self, fcn_eval: &mut F, jacobian: &mut F) -> bool;
 
     /// Computes the residual and jacobian of the nonlinear problem
     ///
@@ -137,14 +130,11 @@ where
     ///
     /// # Outputs
     /// * whether the nonlinear problem was able to successfully to evaluate these quantities with the current solution
-    fn compute_residual(
-        &mut self,
-        fcn_eval: &mut F
-    ) -> bool;
+    fn compute_residual(&mut self, fcn_eval: &mut F) -> bool;
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
-pub trait NonlinearNDProblem<F> : NonlinearSystemSize
+pub trait NonlinearNDProblem<F>: NonlinearSystemSize
 where
     F: crate::FloatType,
 {
@@ -169,7 +159,7 @@ where
 }
 
 /// Nonlinear problems must implement the following trait in-order to be useable within this crates solvers
-pub trait Nonlinear1DProblem<F> : NonlinearSystemSize
+pub trait Nonlinear1DProblem<F>: NonlinearSystemSize
 where
     F: crate::FloatType,
 {

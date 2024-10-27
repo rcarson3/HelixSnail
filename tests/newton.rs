@@ -54,9 +54,7 @@ where
         true
     };
 
-    let mut np = NewtonProblem::<F> {
-        func: lambda,
-    };
+    let mut np = NewtonProblem::<F> { func: lambda };
 
     let mut newton_bb = NewtonBisectionBracketedSolver::<F, NewtonProblem<F>>::new(false, &mut np);
 
@@ -77,12 +75,12 @@ where
         }
     };
     let x_sol = F::from(2.345).unwrap();
-    assert!(newton_bb.x - x_sol <= tol, "Expected solution is outside of expected bounds");
-
     assert!(
-        status == true,
-        "Solution did not converge"
+        newton_bb.x - x_sol <= tol,
+        "Expected solution is outside of expected bounds"
     );
+
+    assert!(status == true, "Solution did not converge");
 }
 
 fn newton_func_xsinx<F>(tol: F)
@@ -100,9 +98,7 @@ where
         true
     };
 
-    let mut np = NewtonProblem::<F> {
-        func: lambda,
-    };
+    let mut np = NewtonProblem::<F> { func: lambda };
 
     let mut newton_bb = NewtonBisectionBracketedSolver::<F, NewtonProblem<F>>::new(false, &mut np);
 
@@ -124,12 +120,12 @@ where
     };
 
     let x_sol = F::from(-0.933308).unwrap();
-    assert!(newton_bb.x - x_sol <= tol, "Expected solution is outside of expected bounds");
-
     assert!(
-        status == true,
-        "Solution did not converge"
+        newton_bb.x - x_sol <= tol,
+        "Expected solution is outside of expected bounds"
     );
+
+    assert!(status == true, "Solution did not converge");
 }
 
 #[test]

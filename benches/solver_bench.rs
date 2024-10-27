@@ -32,7 +32,7 @@ where
 impl<F> NonlinearNDProblem<F> for Broyden<F>
 where
     F: helix_snail::FloatType,
-    [(); Self::NDIM]:
+    [(); Self::NDIM]:,
 {
     fn compute_resid_jacobian(
         &mut self,
@@ -65,8 +65,12 @@ where
         fcn_eval[Self::NDIM - 1] = (F::one() - self.lambda) * fcn + self.lambda * fcn * fcn;
 
         if let Some(jac) = opt_jacobian {
-            assert!(jac.len() >= Self::NDIM * Self::NDIM, "length {:?}", jac.len());
-            let jacobian = helix_snail::array1d_to_array2d_mut::<{Self::NDIM}, F>(jac);
+            assert!(
+                jac.len() >= Self::NDIM * Self::NDIM,
+                "length {:?}",
+                jac.len()
+            );
+            let jacobian = helix_snail::array1d_to_array2d_mut::<{ Self::NDIM }, F>(jac);
 
             // zero things out first
             for item in jacobian.iter_mut().take(Self::NDIM) {
@@ -119,11 +123,7 @@ mod nonlinear_solver {
             ..Default::default()
         };
 
-        let mut solver =
-            TrustRegionDoglegSolver::<f64, Broyden<f64>>::new(
-                &dc,
-                &mut broyden,
-            );
+        let mut solver = TrustRegionDoglegSolver::<f64, Broyden<f64>>::new(&dc, &mut broyden);
 
         for i in 0..Broyden::<f64>::NDIM {
             solver.x[i] = 0.0;
@@ -159,11 +159,7 @@ mod nonlinear_solver {
             ..Default::default()
         };
 
-        let mut solver =
-            TrustRegionDoglegSolver::<f32, Broyden<f32>>::new(
-                &dc,
-                &mut broyden,
-            );
+        let mut solver = TrustRegionDoglegSolver::<f32, Broyden<f32>>::new(&dc, &mut broyden);
 
         for i in 0..Broyden::<f32>::NDIM {
             solver.x[i] = 0.0;

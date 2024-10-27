@@ -120,8 +120,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<'a, F, NP> NonlinearSolver<F>
-    for TrustRegionDoglegSolver<'a, F, NP>
+impl<'a, F, NP> NonlinearSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -161,7 +160,7 @@ where
         let mut residual = [F::zero(); NP::NDIM];
         let mut jacobian = [[F::zero(); NP::NDIM]; NP::NDIM];
 
-        if !NonlinearNDSolver::compute_residual_jacobian(self,&mut residual, &mut jacobian) {
+        if !NonlinearNDSolver::compute_residual_jacobian(self, &mut residual, &mut jacobian) {
             return Err(crate::helix_error::SolverError::InitialEvalFailure);
         }
 
@@ -184,7 +183,11 @@ where
             self.num_iterations += 1;
 
             if !reject_previous {
-                mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &residual, &mut gradient);
+                mat_t_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(
+                    &jacobian,
+                    &residual,
+                    &mut gradient,
+                );
                 let mut temp = [F::zero(); NP::NDIM];
                 mat_vec_mult::<{ NP::NDIM }, { NP::NDIM }, F>(&jacobian, &gradient, &mut temp);
                 jacob_grad_2 = dot_prod::<{ NP::NDIM }, F>(&temp, &temp);
@@ -212,8 +215,11 @@ where
             reject_previous = false;
 
             {
-                let resid_jacob_success =
-                NonlinearNDSolver::compute_residual_jacobian(self, &mut residual, &mut jacobian);
+                let resid_jacob_success = NonlinearNDSolver::compute_residual_jacobian(
+                    self,
+                    &mut residual,
+                    &mut jacobian,
+                );
                 let converged = self.delta_control.update::<{ NP::NDIM }>(
                     &residual,
                     l2_error_0,
@@ -268,8 +274,7 @@ where
     }
 }
 
-impl<'a, F, NP> NonlinearNDSolver<F>
-    for TrustRegionDoglegSolver<'a, F, NP>
+impl<'a, F, NP> NonlinearNDSolver<F> for TrustRegionDoglegSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: NonlinearNDProblem<F>,
@@ -293,13 +298,9 @@ where
             .compute_resid_jacobian(&self.x, fcn_eval, Some(jac))
     }
 
-    fn compute_residual(
-        &mut self,
-        fcn_eval: &mut [F],
-    ) -> bool {
+    fn compute_residual(&mut self, fcn_eval: &mut [F]) -> bool {
         self.function_evals += 1;
 
-        self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, None)
+        self.crj.compute_resid_jacobian(&self.x, fcn_eval, None)
     }
 }

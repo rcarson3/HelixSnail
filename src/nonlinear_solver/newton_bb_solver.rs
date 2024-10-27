@@ -59,10 +59,7 @@ where
     ///
     /// # Outputs:
     /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
-    pub fn new(
-        unbounded: bool,
-        crj: &'a mut NP,
-    ) -> NewtonBisectionBracketedSolver<'a, F, NP> {
+    pub fn new(unbounded: bool, crj: &'a mut NP) -> NewtonBisectionBracketedSolver<'a, F, NP> {
         NewtonBisectionBracketedSolver::<'a, F, NP> {
             x: F::zero(),
             unbounded,
@@ -88,11 +85,11 @@ where
         self.x_upper = x_upper;
     }
     /** find bounds for zero of a function for which x does not have limits ;
-    *
-    * xl and xh need to be set as inputs, fl and fh do not
-    *
-    * on exit value of true, fl and fh are consistent with xl and xh
-    */
+     *
+     * xl and xh need to be set as inputs, fl and fh do not
+     *
+     * on exit value of true, fl and fh are consistent with xl and xh
+     */
     pub fn calculate_bounds(&mut self, func_lower: &mut F, func_upper: &mut F) -> bool {
         if self.x_lower > self.x_upper {
             core::mem::swap(&mut self.x_lower, &mut self.x_upper);
@@ -106,31 +103,34 @@ where
 
         let mut delta_lower = delta_upper;
         let mut success: bool;
-      
+
         let mut delta_x_upper_init;
         let mut delta_x_lower_init;
 
         {
             let mut jacob_upper = F::zero();
             let mut jacob_lower = F::zero();
-            success = self.crj
-            .compute_resid_jacobian(&self.x_upper, func_upper, Some(&mut jacob_upper));
+            success =
+                self.crj
+                    .compute_resid_jacobian(&self.x_upper, func_upper, Some(&mut jacob_upper));
             self.function_evals += 1;
             if !success {
                 return false;
             }
-            success = self.crj
-            .compute_resid_jacobian(&self.x_lower, func_lower, Some(&mut jacob_lower));
+            success =
+                self.crj
+                    .compute_resid_jacobian(&self.x_lower, func_lower, Some(&mut jacob_lower));
             self.function_evals += 1;
 
-            if (func_upper.abs() < self.solution_tolerance) || (func_lower.abs() < self.solution_tolerance) ||
-                (*func_lower * *func_upper) < F::zero() {
+            if (func_upper.abs() < self.solution_tolerance)
+                || (func_lower.abs() < self.solution_tolerance)
+                || (*func_lower * *func_upper) < F::zero()
+            {
                 return true;
             }
 
             delta_x_upper_init = -jacob_upper / *func_upper;
             delta_x_lower_init = -jacob_lower / *func_lower;
-
         }
 
         let mut new_upper = false;
@@ -138,18 +138,31 @@ where
         let mut x_lower_prev = self.x_lower;
 
         let bound_step_growth_factor = F::from(1.2).unwrap();
-        let bound_overshoot_factor= F::from(1.2).unwrap();
+        let bound_overshoot_factor = F::from(1.2).unwrap();
 
-         // Create a lambda function to deal with the bound updates portion of things as
-         // updating the lower bounds was exactly the same as doing it for the upper bounds code
-         // wise...
-         let mut bound_function = |success: &mut bool, func: &mut F, x_value: &mut F, x_prev: &mut F,delta: &mut F, delta_x: &mut F, x_other: &mut F, func_other: &mut F| -> bool {
+        // Create a lambda function to deal with the bound updates portion of things as
+        // updating the lower bounds was exactly the same as doing it for the upper bounds code
+        // wise...
+        let mut bound_function = |success: &mut bool,
+                                  func: &mut F,
+                                  x_value: &mut F,
+                                  x_prev: &mut F,
+                                  delta: &mut F,
+                                  delta_x: &mut F,
+                                  x_other: &mut F,
+                                  func_other: &mut F|
+         -> bool {
             let mut jacob = F::zero();
             let func_prev = *func;
-            *success = self.crj.compute_resid_jacobian(x_value, func, Some(&mut jacob));
+            *success = self
+                .crj
+                .compute_resid_jacobian(x_value, func, Some(&mut jacob));
             self.function_evals += 1;
             if self.logging_level > 0 {
-                info!("NewtonBB in bounding, have x, f, J : {:?}, {:?}, {:?}", &x_value, &func, &jacob);
+                info!(
+                    "NewtonBB in bounding, have x, f, J : {:?}, {:?}, {:?}",
+                    &x_value, &func, &jacob
+                );
             }
 
             if !(*success) {
@@ -159,69 +172,86 @@ where
                 // delta_x is as was before
                 *delta *= F::from(0.1).unwrap();
                 if self.logging_level > 0 {
-                    info!("NewtonBB trouble in bounding, cut delta back to = {:?}", &delta);
+                    info!(
+                        "NewtonBB trouble in bounding, cut delta back to = {:?}",
+                        &delta
+                    );
                 }
                 return false;
-             }
-             if func.abs() < self.solution_tolerance {
+            }
+            if func.abs() < self.solution_tolerance {
                 return true;
-             }
-             if func_prev * *func < F::zero() {
+            }
+            if func_prev * *func < F::zero() {
                 // bracketed
                 *x_other = *x_prev;
                 *func_other = func_prev;
                 return true;
-             }
-             *delta_x = -jacob / *func;
-             *delta *= bound_step_growth_factor;
-             return false;
-         };
+            }
+            *delta_x = -jacob / *func;
+            *delta *= bound_step_growth_factor;
+            return false;
+        };
 
-         for i in 0..self.max_iterations {
+        for i in 0..self.max_iterations {
             // the ordering here biases the search toward exploring smaller x values
             //
             if (i < 10) && (delta_x_lower_init < F::zero()) {
                 x_lower_prev = self.x_lower;
-                self.x_lower += (-delta_lower).max( bound_overshoot_factor / delta_x_lower_init);
+                self.x_lower += (-delta_lower).max(bound_overshoot_factor / delta_x_lower_init);
                 new_upper = false;
-            }
-            else if (i < 10) && (delta_x_upper_init > F::zero()) {
+            } else if (i < 10) && (delta_x_upper_init > F::zero()) {
                 x_upper_prev = self.x_upper;
-                self.x_upper += (-delta_upper).max( bound_overshoot_factor / delta_x_upper_init);
+                self.x_upper += (-delta_upper).max(bound_overshoot_factor / delta_x_upper_init);
                 new_upper = true;
-            }
-            else {
+            } else {
                 // take turns
-                if new_upper { 
+                if new_upper {
                     x_lower_prev = self.x_lower;
                     self.x_lower -= delta_lower;
                     new_upper = false;
-                }
-                else {
+                } else {
                     x_upper_prev = self.x_upper;
                     self.x_upper -= delta_upper;
                     new_upper = true;
-                }           
+                }
             }
             if new_upper {
-                let return_val = bound_function(&mut success, func_upper, &mut self.x_upper, &mut x_upper_prev, &mut delta_upper, &mut delta_x_upper_init, &mut self.x_lower, func_lower);
+                let return_val = bound_function(
+                    &mut success,
+                    func_upper,
+                    &mut self.x_upper,
+                    &mut x_upper_prev,
+                    &mut delta_upper,
+                    &mut delta_x_upper_init,
+                    &mut self.x_lower,
+                    func_lower,
+                );
                 if return_val {
-                    return true; 
+                    return true;
                 }
-                if !success { 
+                if !success {
                     continue;
                 }
-             }
-             else {
-                let return_val = bound_function(&mut success, func_lower, &mut self.x_lower, &mut x_lower_prev, &mut delta_lower, &mut delta_x_lower_init, &mut self.x_upper, func_upper);
+            } else {
+                let return_val = bound_function(
+                    &mut success,
+                    func_lower,
+                    &mut self.x_lower,
+                    &mut x_lower_prev,
+                    &mut delta_lower,
+                    &mut delta_x_lower_init,
+                    &mut self.x_upper,
+                    func_upper,
+                );
                 if return_val {
-                    return true; 
+                    return true;
                 }
-                if !success { 
+                if !success {
                     continue;
                 }
-             }
-         }
+            }
+        }
         false
     }
 }
@@ -234,8 +264,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<'a, F, NP> NonlinearSolver<F>
-    for NewtonBisectionBracketedSolver<'a, F, NP>
+impl<'a, F, NP> NonlinearSolver<F> for NewtonBisectionBracketedSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -262,7 +291,6 @@ where
     }
 
     fn solve(&mut self) -> Result<(), crate::helix_error::SolverError> {
-
         self.converged = false;
 
         let mut func = F::zero();
@@ -281,7 +309,10 @@ where
         let mut func_lower = F::zero();
         let mut func_upper = F::zero();
         {
-            if !self.crj.compute_resid_jacobian(&self.x_lower, &mut func_lower, None) {
+            if !self
+                .crj
+                .compute_resid_jacobian(&self.x_lower, &mut func_lower, None)
+            {
                 return Err(crate::helix_error::SolverError::InitialEvalFailure);
             }
             if func_lower.abs() < self.solution_tolerance {
@@ -293,7 +324,10 @@ where
                 }
                 return Ok(());
             }
-            if !self.crj.compute_resid_jacobian(&self.x_upper, &mut func_upper, None) {
+            if !self
+                .crj
+                .compute_resid_jacobian(&self.x_upper, &mut func_upper, None)
+            {
                 return Err(crate::helix_error::SolverError::InitialEvalFailure);
             }
             if func_upper.abs() < self.solution_tolerance {
@@ -311,11 +345,10 @@ where
         if (func_lower * func_upper) > F::zero() {
             if !self.unbounded {
                 if !self.calculate_bounds(&mut func_lower, &mut func_upper) {
-                    return Err(crate::helix_error::SolverError::AlgorithmFailure)
+                    return Err(crate::helix_error::SolverError::AlgorithmFailure);
                 }
-            }
-            else {
-                return Err(crate::helix_error::SolverError::AlgorithmFailure)
+            } else {
+                return Err(crate::helix_error::SolverError::AlgorithmFailure);
             }
         }
         // We want x_lower to correspond to the point at which f(x_lower) < 0
@@ -329,26 +362,27 @@ where
 
         if (func < F::zero()) && (func > func_lower) {
             self.x_lower = self.x;
-        }
-        else if (func > F::zero()) && (func < func_upper) {
+        } else if (func > F::zero()) && (func < func_upper) {
             self.x_upper = self.x;
         }
         //     main loop over a given number of iterations. checks whether
-        //     extrapolated value using the gradient for newton iteration 
+        //     extrapolated value using the gradient for newton iteration
         //     is beyond the bounds and either uses the Newton estimate of
-        //     bisection depending on outcome. convergence is checked on 
+        //     bisection depending on outcome. convergence is checked on
         //     the value of the function, closeness of variable to either
         //     limit and change of variable over an iteration.
 
         for i in 0..self.max_iterations {
-            let conditional1 = ((self.x - self.x_upper) * jacobian - func) * ((self.x - self.x_lower) * jacobian - func) >= F::zero();
-            let conditional2 = (F::from(2.0).unwrap() * func).abs() > (delta_x_old * jacobian).abs();
+            let conditional1 = ((self.x - self.x_upper) * jacobian - func)
+                * ((self.x - self.x_lower) * jacobian - func)
+                >= F::zero();
+            let conditional2 =
+                (F::from(2.0).unwrap() * func).abs() > (delta_x_old * jacobian).abs();
             if conditional1 || conditional2 {
                 delta_x_old = delta_x;
                 delta_x = (self.x_upper - self.x_lower) * F::from(0.5).unwrap();
                 self.x = self.x_lower + delta_x;
-            }
-            else {
+            } else {
                 delta_x_old = delta_x;
                 delta_x = -func / jacobian;
                 self.x += delta_x;
@@ -363,32 +397,37 @@ where
                 // but that may in some cases be too sloppy
                 //
                 if self.logging_level > 0 {
-                    info!("Converged by bracketing with dx: {:?}, f(x): {:?}, x: {:?}", &delta_x, &func, self.x);
+                    info!(
+                        "Converged by bracketing with dx: {:?}, f(x): {:?}, x: {:?}",
+                        &delta_x, &func, self.x
+                    );
                 }
                 self.l2_error = func.abs();
-                self.converged = true;                
+                self.converged = true;
                 return Ok(());
             }
-            if !Nonlinear1DSolver::compute_residual_jacobian(self, &mut func, &mut  jacobian) {
+            if !Nonlinear1DSolver::compute_residual_jacobian(self, &mut func, &mut jacobian) {
                 return Err(crate::helix_error::SolverError::EvalFailure);
             }
             if self.logging_level > 0 {
-                info!("NewtonBB evaluation with x, f, J : {:?}, {:?}, {:?}", &self.x, &func, &jacobian);
+                info!(
+                    "NewtonBB evaluation with x, f, J : {:?}, {:?}, {:?}",
+                    &self.x, &func, &jacobian
+                );
             }
             if func.abs() < self.solution_tolerance {
                 if self.logging_level > 0 {
                     info!("Converged with f(x): {:?} at x: {:?}", &func, &self.x);
                 }
                 self.l2_error = func.abs();
-                self.converged = true;                
-                return Ok(());                
+                self.converged = true;
+                return Ok(());
             }
             if func < F::zero() {
                 self.x_lower = self.x;
-             }
-             else {
+            } else {
                 self.x_upper = self.x;
-             }
+            }
         }
         return Err(crate::helix_error::SolverError::UnconvergedMaxIter);
     }
@@ -409,18 +448,12 @@ where
     }
 }
 
-impl<'a, F, NP> Nonlinear1DSolver<F>
-    for NewtonBisectionBracketedSolver<'a, F, NP>
+impl<'a, F, NP> Nonlinear1DSolver<F> for NewtonBisectionBracketedSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
 {
-    fn compute_residual_jacobian(
-        &mut self,
-        fcn_eval: &mut F,
-        jacobian: &mut F,
-    ) -> bool {
-
+    fn compute_residual_jacobian(&mut self, fcn_eval: &mut F, jacobian: &mut F) -> bool {
         self.function_evals += 1;
         self.jacobian_evals += 1;
 
@@ -428,12 +461,8 @@ where
             .compute_resid_jacobian(&self.x, fcn_eval, Some(jacobian))
     }
 
-    fn compute_residual(
-        &mut self,
-        fcn_eval: &mut F,
-    ) -> bool {
+    fn compute_residual(&mut self, fcn_eval: &mut F) -> bool {
         self.function_evals += 1;
-        self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, None)
+        self.crj.compute_resid_jacobian(&self.x, fcn_eval, None)
     }
 }
