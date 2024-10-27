@@ -1,7 +1,7 @@
 [package]
 name = "helix_snail"
 version = "0.1.0"
-authors = ["rcarson3 <rac428@cornell.edu>"]
+authors = ["rcarson3"]
 license = "MIT"
 readme = "README.md"
 edition = "2021"
