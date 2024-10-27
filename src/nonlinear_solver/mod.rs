@@ -164,7 +164,7 @@ where
         &mut self,
         x: &[F],
         fcn_eval: &mut [F],
-        opt_jacobian: &mut Option<&mut [F]>,
+        opt_jacobian: Option<&mut [F]>,
     ) -> bool;
 }
 
@@ -189,6 +189,6 @@ where
         &mut self,
         x: &F,
         fcn_eval: &mut F,
-        opt_jacobian: &mut Option<&mut F>,
+        opt_jacobian: Option<&mut F>,
     ) -> bool;
 }

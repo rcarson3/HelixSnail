@@ -17,8 +17,8 @@ where
     /// The field we're solving for. Although, we typically are solving for a scaled version of this in order to have
     /// a numerically stable system of equations.
     pub x: F,
-    /// Whether our solver is bracketed or not
-    bracket: bool,
+    /// Whether our solver is unbounded or not
+    unbounded: bool,
     /// The total number of function evaluations our solver took
     function_evals: usize,
     /// The total number of jacobian evaluations our solver took
@@ -60,12 +60,12 @@ where
     /// # Outputs:
     /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
     pub fn new(
-        bracket: bool,
+        unbounded: bool,
         crj: &'a mut NP,
     ) -> NewtonBisectionBracketedSolver<'a, F, NP> {
         NewtonBisectionBracketedSolver::<'a, F, NP> {
             x: F::zero(),
-            bracket,
+            unbounded,
             function_evals: 0,
             jacobian_evals: 0,
             num_iterations: 0,
@@ -114,13 +114,13 @@ where
             let mut jacob_upper = F::zero();
             let mut jacob_lower = F::zero();
             success = self.crj
-            .compute_resid_jacobian(&self.x_upper, func_upper, &mut Some(&mut jacob_upper));
+            .compute_resid_jacobian(&self.x_upper, func_upper, Some(&mut jacob_upper));
             self.function_evals += 1;
             if !success {
                 return false;
             }
             success = self.crj
-            .compute_resid_jacobian(&self.x_lower, func_lower, &mut Some(&mut jacob_lower));
+            .compute_resid_jacobian(&self.x_lower, func_lower, Some(&mut jacob_lower));
             self.function_evals += 1;
 
             if (func_upper.abs() < self.solution_tolerance) || (func_lower.abs() < self.solution_tolerance) ||
@@ -146,7 +146,7 @@ where
          let mut bound_function = |success: &mut bool, func: &mut F, x_value: &mut F, x_prev: &mut F,delta: &mut F, delta_x: &mut F, x_other: &mut F, func_other: &mut F| -> bool {
             let mut jacob = F::zero();
             let func_prev = *func;
-            *success = self.crj.compute_resid_jacobian(x_value, func, &mut Some(&mut jacob));
+            *success = self.crj.compute_resid_jacobian(x_value, func, Some(&mut jacob));
             self.function_evals += 1;
             if self.logging_level > 0 {
                 info!("NewtonBB in bounding, have x, f, J : {:?}, {:?}, {:?}", &x_value, &func, &jacob);
@@ -268,7 +268,7 @@ where
         let mut func = F::zero();
         let mut jacobian = F::zero();
 
-        if !Nonlinear1DSolver::compute_residual_jacobian(self, &mut func, &mut  jacobian) {
+        if !Nonlinear1DSolver::compute_residual_jacobian(self, &mut func, &mut jacobian) {
             return Err(crate::helix_error::SolverError::InitialEvalFailure);
         }
 
@@ -281,7 +281,7 @@ where
         let mut func_lower = F::zero();
         let mut func_upper = F::zero();
         {
-            if self.crj.compute_resid_jacobian(&self.x_lower, &mut func_lower, &mut None) {
+            if !self.crj.compute_resid_jacobian(&self.x_lower, &mut func_lower, None) {
                 return Err(crate::helix_error::SolverError::InitialEvalFailure);
             }
             if func_lower.abs() < self.solution_tolerance {
@@ -293,7 +293,7 @@ where
                 }
                 return Ok(());
             }
-            if self.crj.compute_resid_jacobian(&self.x_upper, &mut func_upper, &mut None) {
+            if !self.crj.compute_resid_jacobian(&self.x_upper, &mut func_upper, None) {
                 return Err(crate::helix_error::SolverError::InitialEvalFailure);
             }
             if func_upper.abs() < self.solution_tolerance {
@@ -309,7 +309,7 @@ where
         }
 
         if (func_lower * func_upper) > F::zero() {
-            if !self.bracket {
+            if !self.unbounded {
                 if !self.calculate_bounds(&mut func_lower, &mut func_upper) {
                     return Err(crate::helix_error::SolverError::AlgorithmFailure)
                 }
@@ -425,7 +425,7 @@ where
         self.jacobian_evals += 1;
 
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, &mut Some(jacobian))
+            .compute_resid_jacobian(&self.x, fcn_eval, Some(jacobian))
     }
 
     fn compute_residual(
@@ -434,6 +434,6 @@ where
     ) -> bool {
         self.function_evals += 1;
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, &mut None)
+            .compute_resid_jacobian(&self.x, fcn_eval, None)
     }
 }

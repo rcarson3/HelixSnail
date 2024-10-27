@@ -562,7 +562,7 @@ where
         );
         let jac = crate::array2d_to_array1d_mut(jacobian);
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, &mut Some(jac))
+            .compute_resid_jacobian(&self.x, fcn_eval, Some(jac))
     }
 
     fn compute_residual(
@@ -571,6 +571,6 @@ where
     ) -> bool {
         self.function_evals += 1;
         self.crj
-            .compute_resid_jacobian(&self.x, fcn_eval, &mut None)
+            .compute_resid_jacobian(&self.x, fcn_eval, None)
     }
 }
