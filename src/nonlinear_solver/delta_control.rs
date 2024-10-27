@@ -254,7 +254,7 @@ where
                 if !took_full {
                     self.increase_delta(delta);
                 }
-            } else if (*rho < self.xi_lo) && (*rho > self.xi_uo) {
+            } else if (*rho < self.xi_lo) || (*rho > self.xi_uo) {
                 success = self.decrease_delta(norm_full, took_full, delta);
             }
         }
@@ -265,3 +265,15 @@ where
         success
     }
 }
+
+// let delta_success = self.update_delta(
+//     *l2_error,
+//     l2_error_0,
+//     predicted_residual,
+//     use_newton_raphson,
+//     newton_raphson_norm,
+//     delta,
+//     reject_previous,
+//     rho_last,
+// );
+//0.523492, 0.333333, 0.000000, 1, 0.166667, 1.000000, 0, 0.000000

@@ -252,7 +252,10 @@ where
         Ok(())
     }
     fn get_num_fcn_evals(&self) -> usize {
-        self.num_iterations
+        self.function_evals
+    }
+    fn get_num_jacobian_evals(&self) -> usize {
+        self.jacobian_evals
     }
     fn get_solver_rho(&self) -> F {
         self.rho_last

@@ -48,6 +48,11 @@ where
     /// # Outputs
     /// * The number of function evals
     fn get_num_fcn_evals(&self) -> usize;
+    /// Get the number of jacobian evals of the system
+    ///
+    /// # Outputs
+    /// * The number of jacobian evals
+    fn get_num_jacobian_evals(&self) -> usize;
     /// Gets the current solver's normalized ratio between the actual l2 error of the residual
     /// and the predicted l2 error of the residual
     ///

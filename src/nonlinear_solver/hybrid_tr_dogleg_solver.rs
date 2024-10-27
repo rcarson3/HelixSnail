@@ -100,7 +100,7 @@ where
             solution_tolerance: F::from(1e-12).unwrap(),
             l2_error: -F::one(),
             delta: F::from(1e8).unwrap(),
-            rho_last: F::one(),
+            rho_last: F::zero(),
             crj,
             converged: false,
             logging_level: 0,
@@ -523,7 +523,10 @@ where
     }
 
     fn get_num_fcn_evals(&self) -> usize {
-        self.num_iterations
+        self.function_evals
+    }
+    fn get_num_jacobian_evals(&self) -> usize {
+        self.jacobian_evals
     }
     fn get_solver_rho(&self) -> F {
         self.rho_last
