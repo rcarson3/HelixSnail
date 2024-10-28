@@ -56,7 +56,7 @@ where
 
     let mut np = NewtonProblem::<F> { func: lambda };
 
-    let mut newton_bb = NewtonBisectionBracketedSolver::<F, NewtonProblem<F>>::new(false, &mut np);
+    let mut newton_bb = NewtonBoundedBisectionSolver::<F, NewtonProblem<F>>::new(false, &mut np);
 
     newton_bb.x = F::zero();
     newton_bb.set_bounds(F::zero(), F::zero());
@@ -100,7 +100,7 @@ where
 
     let mut np = NewtonProblem::<F> { func: lambda };
 
-    let mut newton_bb = NewtonBisectionBracketedSolver::<F, NewtonProblem<F>>::new(false, &mut np);
+    let mut newton_bb = NewtonBoundedBisectionSolver::<F, NewtonProblem<F>>::new(false, &mut np);
 
     newton_bb.x = F::zero();
     newton_bb.set_bounds(F::zero(), F::zero());

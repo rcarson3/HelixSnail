@@ -10,18 +10,18 @@ use crate::nonlinear_solver::*;
 use core::result::Result;
 use log::info;
 
-/// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
-/// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
-/// when a given step is near the solution.
-// A hybrid trust region type solver, dogleg approximation
-// for dense general Jacobian matrix that makes use of a rank-1 update of the jacobian
-// using QR factorization
-// Method is inspired by SNLS current trust region dogleg solver, Powell's original hybrid method for
+/// This nonlinear solver is a hybrid trust region type solver that makes use of a dogleg approximation
+/// for dense general Jacobian matrices. Internally, it approximates the jacobian using a rank-1 update
+/// scheme using the QR factorization of the matrix.
+/// Internally, the solver uses some heuristics to determine if we need to recalculate the jacobian rather
+/// than using an approximation. This approach can help us "smooth" over discontinuities or very sharp edges
+/// that might be in our solution space.
+/// This method is inspired by SNLS  trust region dogleg solver, Powell's original hybrid method for
 // nonlinear equations, and MINPACK's modified version of it.
-// Powell's original hybrid method can be found at:
-// M. J. D. Powell, "A hybrid method for nonlinear equations", in Numerical methods for nonlinear algebraic equations,
-// Philip Rabinowitz, editor, chapter 6, pages 87-114, Gordon and Breach Science Publishers, New York, 1970.
-// MINPACK's user guide is found at https://doi.org/10.2172/6997568
+/// Powell's original hybrid method can be found at:
+/// M. J. D. Powell, "A hybrid method for nonlinear equations", in Numerical methods for nonlinear algebraic equations,
+/// Philip Rabinowitz, editor, chapter 6, pages 87-114, Gordon and Breach Science Publishers, New York, 1970.
+/// MINPACK's user guide is found at https://doi.org/10.2172/6997568
 pub struct HybridTRDglSolver<'a, F, NP>
 where
     F: crate::FloatType,
@@ -84,7 +84,7 @@ where
     /// * `crj` - Our nonlinear problem which can calculate the residual / func evaluation and the jacobian of the residual
     ///
     /// # Outputs:
-    /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
+    /// * `HybridTRDglSolver::<'a, F, NP>` - a new solver
     pub fn new(
         delta_control: &'a TrustRegionDeltaControl<F>,
         crj: &'a mut NP,
@@ -372,17 +372,17 @@ where
         Ok(())
     }
 
-    // This performs a Broyden Rank-1 style update for Q, R and Q^T f
-    // This version has origins in this paper:
-    // Gill, Philip E., et al. "Methods for modifying matrix factorizations." Mathematics of computation 28.126 (1974): 505-535.
-    // However, you can generally find it described in more approachable manners elsewhere on the internet
-    //
-    // The Broyden update method is described in:
-    // Broyden, Charles G. "A class of methods for solving nonlinear simultaneous equations." Mathematics of computation 19.92 (1965): 577-593.
-    // Additional resources that might  be of interest are:
-    // Chapter 8 of https://doi.org/10.1137/1.9781611971200.ch8
-    // or the pseudo-algorithms / code for how to update things in
-    // Appendix A of https://doi.org/10.1137/1.9781611971200.appa
+    /// This performs a Broyden Rank-1 style update for Q, R and Q^T f
+    /// This version has origins in this paper:
+    /// Gill, Philip E., et al. "Methods for modifying matrix factorizations." Mathematics of computation 28.126 (1974): 505-535.
+    /// However, you can generally find it described in more approachable manners elsewhere on the internet
+    ///
+    /// The Broyden update method is described in:
+    /// Broyden, Charles G. "A class of methods for solving nonlinear simultaneous equations." Mathematics of computation 19.92 (1965): 577-593.
+    /// Additional resources that might  be of interest are:
+    /// Chapter 8 of https://doi.org/10.1137/1.9781611971200.ch8
+    /// or the pseudo-algorithms / code for how to update things in
+    /// Appendix A of https://doi.org/10.1137/1.9781611971200.appa
     fn rank1_update(
         &mut self,
         delta_x_normalized: &[F],    // delta x / || delta_x||_L2

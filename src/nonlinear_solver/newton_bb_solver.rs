@@ -6,10 +6,9 @@ use crate::nonlinear_solver::*;
 use core::result::Result;
 use log::info;
 
-/// This nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver
-/// for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step
-/// when a given step is near the solution.
-pub struct NewtonBisectionBracketedSolver<'a, F, NP>
+/// This nonlinear solver makes use of a 1D Newton Raphson method combined with a bounded bisection method to solve
+/// nonlinear problems.
+pub struct NewtonBoundedBisectionSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F> + Sized,
@@ -45,7 +44,7 @@ where
     x_upper: F,
 }
 
-impl<'a, F, NP> NewtonBisectionBracketedSolver<'a, F, NP>
+impl<'a, F, NP> NewtonBoundedBisectionSolver<'a, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -54,13 +53,13 @@ where
     /// and the nonlinear problem structure
     ///
     /// # Arguments:
-    /// * `delta_control` - controls the step size that our solver takes while iterating for a solution
+    /// * `unbounded` - whether our solution is initially unbounded and we need to bound it.
     /// * `crj` - Our nonlinear problem which can calculate the residual / func evaluation and the jacobian of the residual
     ///
     /// # Outputs:
     /// * `TrustRegionDoglegSolver::<'a, F, NP>` - a new solver
-    pub fn new(unbounded: bool, crj: &'a mut NP) -> NewtonBisectionBracketedSolver<'a, F, NP> {
-        NewtonBisectionBracketedSolver::<'a, F, NP> {
+    pub fn new(unbounded: bool, crj: &'a mut NP) -> NewtonBoundedBisectionSolver<'a, F, NP> {
+        NewtonBoundedBisectionSolver::<'a, F, NP> {
             x: F::zero(),
             unbounded,
             function_evals: 0,
@@ -77,19 +76,25 @@ where
             x_upper: F::zero(),
         }
     }
+    /// For some systems we also have an x tolerance that we need to set in-case we end at one of
+    /// our brackets / bounds for the solution. If that is the case then this tolerance tells us
+    /// when we reach that point.
     pub fn set_x_tolerance(&mut self, x_tolerance: F) {
         self.x_tolerance = x_tolerance;
     }
+    /// For all systems, you'll want to set these values to either the bounds you want or the initial
+    /// x guess you've picked before running the solver. If not we'll assume it is set to either
+    /// 0 if it's the initial run or whatever the last set of bounds were when the solver was called.
     pub fn set_bounds(&mut self, x_lower: F, x_upper: F) {
         self.x_lower = x_lower;
         self.x_upper = x_upper;
     }
-    /** find bounds for zero of a function for which x does not have limits ;
-     *
-     * xl and xh need to be set as inputs, fl and fh do not
-     *
-     * on exit value of true, fl and fh are consistent with xl and xh
-     */
+    /// Finds the bounds for the zero function for when x does not have a limit already set.
+    /// Internally, one will need to set x_lower and x_upper to a value ahead of time.
+    /// The upper and lower function values do not need to be set ahead of time as they will be set
+    /// within the function.
+    /// Assuming things run successfully then func_lower and func_upper will be consistent with the
+    /// lower and upper x values.
     pub fn calculate_bounds(&mut self, func_lower: &mut F, func_upper: &mut F) -> bool {
         if self.x_lower > self.x_upper {
             core::mem::swap(&mut self.x_lower, &mut self.x_upper);
@@ -256,7 +261,7 @@ where
     }
 }
 
-impl<F, NP> NonlinearSystemSize for NewtonBisectionBracketedSolver<'_, F, NP>
+impl<F, NP> NonlinearSystemSize for NewtonBoundedBisectionSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -264,7 +269,7 @@ where
     const NDIM: usize = NP::NDIM;
 }
 
-impl<F, NP> NonlinearSolver<F> for NewtonBisectionBracketedSolver<'_, F, NP>
+impl<F, NP> NonlinearSolver<F> for NewtonBoundedBisectionSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,
@@ -440,7 +445,7 @@ where
     }
 }
 
-impl<F, NP> Nonlinear1DSolver<F> for NewtonBisectionBracketedSolver<'_, F, NP>
+impl<F, NP> Nonlinear1DSolver<F> for NewtonBoundedBisectionSolver<'_, F, NP>
 where
     F: crate::FloatType,
     NP: Nonlinear1DProblem<F>,

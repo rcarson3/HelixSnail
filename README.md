@@ -7,7 +7,9 @@ HelixSnail is written with a `no_std` environment being the default environment.
 
 * `TrustRegionDoglegSolver` - this nonlinear solver makes use of a model trust-region method that makes use of a dogleg solver for the sub-problem of the nonlinear problem. It reduces down to taking a full newton raphson step when a given step is near the solution.
 
-* The hybrid version of the trust region method with a dogleg solver from `SNLS` will also be ported at some point.
+* The `HybridTRDglSolver` - this is a hybrid version of the trust region method with a dogleg solver and is the same one that I originally created for the `SNLS` library but is based on the work of M. J. D. Powell and his initial formulation of a hybrid solver back in the 1960s/1970s.
+ 
+* The `NewtonBoundedBisectionSolver` - this is a 1D nonlinear solver that makes use of a 1D Newton Raphson method combined with a bounded bisection method to solve nonlinear problems.
 
 * Variations of these solvers that make use of different `DeltaControl` objects will also be supported at some point. However, it will require additional research into acceptable design choices of the nonlinear solvers in order to reduce code duplication.
 
